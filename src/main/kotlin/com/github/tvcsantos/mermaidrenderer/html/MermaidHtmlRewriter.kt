@@ -7,8 +7,18 @@ import com.github.tvcsantos.mermaidrenderer.render.DiagramState
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
-/** Outcome of a rewrite; the counts exist so a silent no-op can be diagnosed. */
-data class RewriteResult(val html: String, val candidates: Int, val matched: Int)
+/**
+ * Outcome of a rewrite. The counts exist so a silent no-op can be diagnosed, and [failed] lists the
+ * diagrams that are currently broken, so the gutter marker can be kept in step.
+ */
+data class RewriteResult(
+    val html: String,
+    val candidates: Int,
+    val matched: Int,
+    val failed: Set<String> = emptySet(),
+    /** Diagrams still being rendered; the popup waits on these to replace its content. */
+    val pending: Int = 0,
+)
 
 /**
  * Replaces Mermaid code blocks in rendered documentation HTML with the rendered image.
@@ -24,6 +34,7 @@ object MermaidHtmlRewriter {
         requestFor: (String) -> DiagramRequest,
         resolve: (DiagramRequest) -> DiagramState,
         isTagged: (String) -> Boolean = { false },
+        showProgress: Boolean = false,
     ): RewriteResult {
         val document = Jsoup.parse(html)
         document.outputSettings().prettyPrint(false)
@@ -34,25 +45,40 @@ object MermaidHtmlRewriter {
 
         var changed = false
         var matched = 0
+        var pending = 0
+        val failed = mutableSetOf<String>()
         for (element in candidates) {
             if (!element.hasParent()) continue
             val source = MermaidBlockDetector.mermaidSource(element, heuristics, isTagged) ?: continue
             matched++
             when (val state = resolve(requestFor(source))) {
-                is DiagramState.Ready -> element.replaceWith(image(state.diagram))
-                is DiagramState.Failed -> element.after(
-                    note(MermaidBundle.message("diagram.failed") + ": " + state.message.take(MAX_ERROR_LENGTH))
-                )
+                is DiagramState.Ready -> {
+                    element.replaceWith(image(state.diagram))
+                    changed = true
+                }
 
-                DiagramState.Pending -> element.after(note(MermaidBundle.message("diagram.pending")))
+                // Left exactly as the author wrote it. A Mermaid parse error runs for paragraphs
+                // and would push the documentation off the screen, so it is reported by
+                // MermaidErrorLineMarkerProvider in the gutter and written to the log instead.
+                DiagramState.Failed -> failed += MermaidFences.normalize(source)
+
+                // Silent by default: the block simply turns into the diagram once it is ready.
+                DiagramState.Pending -> {
+                    pending++
+                    if (showProgress) {
+                        element.after(note(MermaidBundle.message("diagram.pending")))
+                        changed = true
+                    }
+                }
             }
-            changed = true
         }
 
         return RewriteResult(
             html = if (changed) document.html() else html,
             candidates = candidates.size,
             matched = matched,
+            failed = failed,
+            pending = pending,
         )
     }
 
@@ -67,5 +93,4 @@ object MermaidHtmlRewriter {
 
     private fun note(text: String): Element = Element("p").appendChild(Element("i").text(text))
 
-    private const val MAX_ERROR_LENGTH = 300
 }

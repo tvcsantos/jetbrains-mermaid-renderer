@@ -29,6 +29,12 @@ class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
         var heuristicDetection: Boolean = true
 
         @JvmField
+        var showErrorMarker: Boolean = false
+
+        @JvmField
+        var showRenderingProgress: Boolean = false
+
+        @JvmField
         var themeMode: String = ThemeMode.AUTO.name
 
         @JvmField
@@ -53,6 +59,24 @@ class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
         get() = state.heuristicDetection
         set(value) {
             state.heuristicDetection = value
+        }
+
+    /**
+     * When on, a diagram that has not been rendered yet is marked as such in the comment. Off by
+     * default: a diagram usually appears within a moment, and the note is mostly useful when
+     * diagnosing why one does not.
+     */
+    var showRenderingProgress: Boolean
+        get() = state.showRenderingProgress
+        set(value) {
+            state.showRenderingProgress = value
+        }
+
+    /** Off by default: a diagram that fails to render is only written to the log. */
+    var showErrorMarker: Boolean
+        get() = state.showErrorMarker
+        set(value) {
+            state.showErrorMarker = value
         }
 
     var themeMode: ThemeMode

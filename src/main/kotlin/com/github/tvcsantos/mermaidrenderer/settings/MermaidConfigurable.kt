@@ -1,10 +1,12 @@
 package com.github.tvcsantos.mermaidrenderer.settings
 
 import com.github.tvcsantos.mermaidrenderer.MermaidBundle
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.github.tvcsantos.mermaidrenderer.render.DiagramCache
 import com.github.tvcsantos.mermaidrenderer.render.MermaidRenderService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindIntText
 import com.intellij.ui.dsl.builder.bindItem
@@ -21,6 +23,16 @@ class MermaidConfigurable : BoundConfigurable(MermaidBundle.message("settings.ti
                 checkBox(MermaidBundle.message("settings.heuristic"))
                     .bindSelected(settings::heuristicDetection)
                     .comment(MermaidBundle.message("settings.heuristic.comment"))
+            }
+            row {
+                checkBox(MermaidBundle.message("settings.errorMarker"))
+                    .bindSelected(settings::showErrorMarker)
+                    .comment(MermaidBundle.message("settings.errorMarker.comment"))
+            }
+            row {
+                checkBox(MermaidBundle.message("settings.progress"))
+                    .bindSelected(settings::showRenderingProgress)
+                    .comment(MermaidBundle.message("settings.progress.comment"))
             }
             row(MermaidBundle.message("settings.theme")) {
                 comboBox(ThemeMode.entries.toList())
@@ -48,5 +60,9 @@ class MermaidConfigurable : BoundConfigurable(MermaidBundle.message("settings.ti
         super.apply()
         // Theme, width and scale are part of the cache key, so previous failures deserve a retry.
         service<MermaidRenderService>().forgetFailures()
+        // Showing or hiding the marker only takes effect once the files are analysed again.
+        ProjectManager.getInstance().openProjects
+            .filterNot { it.isDisposed }
+            .forEach { DaemonCodeAnalyzer.getInstance(it).restart() }
     }
 }

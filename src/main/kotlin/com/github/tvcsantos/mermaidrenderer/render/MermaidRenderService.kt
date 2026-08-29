@@ -1,9 +1,11 @@
 package com.github.tvcsantos.mermaidrenderer.render
 
+import com.github.tvcsantos.mermaidrenderer.html.MermaidFences
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -13,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong
 /** What the HTML rewriter knows about a diagram right now. */
 sealed interface DiagramState {
     data class Ready(val diagram: CachedDiagram) : DiagramState
-    data class Failed(val message: String) : DiagramState
+    data object Failed : DiagramState
     data object Pending : DiagramState
 }
 
@@ -35,6 +37,9 @@ class MermaidRenderService : Disposable {
     /** Remembered so a broken diagram is not re-rendered on every pass; cleared on settings change. */
     private val failures = ConcurrentHashMap<String, String>()
 
+    /** The same failures keyed by normalized diagram text, for the gutter marker. */
+    private val failuresBySource = ConcurrentHashMap<String, String>()
+
     private val generationCounter = AtomicLong()
 
     /**
@@ -49,7 +54,8 @@ class MermaidRenderService : Disposable {
 
     fun resolve(request: DiagramRequest, target: RefreshTarget?): DiagramState {
         service<DiagramCache>().get(request.cacheKey)?.let { return DiagramState.Ready(it) }
-        failures[request.cacheKey]?.let { return DiagramState.Failed(it) }
+        // The message itself is read from failureFor() by the gutter marker, and logged when recorded.
+        if (failures.containsKey(request.cacheKey)) return DiagramState.Failed
 
         // Nothing is displayed without a UI, and starting a browser would only slow tests down.
         if (ApplicationManager.getApplication().isHeadlessEnvironment) return DiagramState.Pending
@@ -66,8 +72,7 @@ class MermaidRenderService : Disposable {
                 is RenderOutcome.Success ->
                     service<DiagramCache>().put(request.cacheKey, outcome.png, outcome.width, outcome.height)
 
-                is RenderOutcome.Failure ->
-                    failures[request.cacheKey] = outcome.message
+                is RenderOutcome.Failure -> recordFailure(request, outcome.message)
             }
         } finally {
             inFlight.remove(request.cacheKey)
@@ -80,9 +85,19 @@ class MermaidRenderService : Disposable {
         }
     }
 
+    internal fun recordFailure(request: DiagramRequest, message: String) {
+        failures[request.cacheKey] = message
+        failuresBySource[MermaidFences.normalize(request.source)] = message
+        logger<MermaidRenderService>().warn("Mermaid could not render a diagram: $message")
+    }
+
+    /** The Mermaid error for a diagram whose text normalizes to [normalizedSource], if any. */
+    fun failureFor(normalizedSource: String): String? = failuresBySource[normalizedSource]
+
     /** Lets diagrams that previously failed be retried, e.g. after settings changed. */
     fun forgetFailures() {
         failures.clear()
+        failuresBySource.clear()
         bumpGeneration()
     }
 

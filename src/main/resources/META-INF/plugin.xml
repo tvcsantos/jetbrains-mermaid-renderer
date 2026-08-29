@@ -29,6 +29,17 @@
                 serviceImplementation="com.github.tvcsantos.mermaidrenderer.render.MermaidDocRendererProvider"
                 overrides="true"/>
 
+        <!-- The same decoration for the hover popup, quick documentation and the tool window. -->
+        <projectService
+                serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
+                serviceImplementation="com.github.tvcsantos.mermaidrenderer.popup.MermaidIdeDocumentationTargetProvider"
+                overrides="true"/>
+
+        <!-- Our own gutter icon for a broken diagram; the rendered-comment icon cannot be ours. -->
+        <codeInsight.lineMarkerProvider
+                language=""
+                implementationClass="com.github.tvcsantos.mermaidrenderer.render.MermaidErrorLineMarkerProvider"/>
+
         <postStartupActivity implementation="com.github.tvcsantos.mermaidrenderer.render.MermaidSeamCheck"/>
 
         <notificationGroup id="Mermaid Renderer" displayType="BALLOON"/>

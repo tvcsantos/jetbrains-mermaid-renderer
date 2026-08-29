@@ -41,23 +41,48 @@ class MermaidHtmlRewriterTest {
     }
 
     @Test
-    fun `a pending diagram keeps the source and adds a note`() {
-        val result = rewrite("<html><body><pre class=\"mermaid\">graph TD; A-->B;</pre></body></html>") {
-            DiagramState.Pending
-        }
+    fun `a pending diagram is silent by default`() {
+        val html = "<html><body><pre class=\"mermaid\">graph TD; A-->B;</pre></body></html>"
 
-        assertTrue(result.contains("graph TD"))
-        assertTrue(result.contains("Rendering diagram"))
+        val result = rewrite(html) { DiagramState.Pending }
+
+        assertEquals("The comment must not change until the diagram is ready", html, result)
     }
 
     @Test
-    fun `a failed diagram reports the mermaid message`() {
-        val result = rewrite("<html><body><pre class=\"mermaid\">nonsense</pre></body></html>") {
-            DiagramState.Failed("Parse error on line 1")
-        }
+    fun `a pending diagram is announced when progress is shown`() {
+        val result = MermaidHtmlRewriter.rewrite(
+            html = "<html><body><pre class=\"mermaid\">graph TD; A-->B;</pre></body></html>",
+            heuristics = true,
+            requestFor = ::request,
+            resolve = { DiagramState.Pending },
+            showProgress = true,
+        )
 
-        assertTrue(result.contains("nonsense"))
-        assertTrue(result.contains("Parse error on line 1"))
+        assertTrue(result.html.contains("graph TD"))
+        assertTrue(result.html.contains("Rendering diagram"))
+    }
+
+    @Test
+    fun `a failed diagram leaves the comment untouched`() {
+        val html = "<html><body><pre class=\"mermaid\">nonsense</pre></body></html>"
+
+        val result = rewrite(html) { DiagramState.Failed }
+
+        // Reported by the gutter line marker and the log, never pasted into the documentation.
+        assertEquals(html, result)
+    }
+
+    @Test
+    fun `a failed diagram is reported so the gutter marker can follow`() {
+        val result = MermaidHtmlRewriter.rewrite(
+            html = "<html><body><pre class=\"mermaid\">graph TD;\n  A --&gt;</pre></body></html>",
+            heuristics = true,
+            requestFor = ::request,
+            resolve = { DiagramState.Failed },
+        )
+
+        assertEquals(setOf("graph TD;\nA -->"), result.failed)
     }
 
     @Test

@@ -67,7 +67,7 @@ class JcefMermaidRenderer : Disposable {
                     "The renderer page did not load in ${timeout}s " +
                         "(url=${browser.cefBrowser.url}, created=${browser.isCefBrowserCreated})"
                 )
-                return RenderOutcome.Failure("the mermaid renderer page did not finish loading")
+                return RenderOutcome.Failure(MermaidBundle.message("render.error.pageNotLoaded"))
             }
 
             val id = UUID.randomUUID().toString()
@@ -87,7 +87,7 @@ class JcefMermaidRenderer : Disposable {
                 browser.cefBrowser.executeJavaScript(script, browser.cefBrowser.url, 0)
                 return future.get(timeout, TimeUnit.SECONDS)
             } catch (e: TimeoutException) {
-                return RenderOutcome.Failure("rendering timed out after ${timeout}s")
+                return RenderOutcome.Failure(MermaidBundle.message("render.error.timeout", timeout))
             } catch (e: Exception) {
                 log.warn("Mermaid rendering failed", e)
                 return RenderOutcome.Failure(e.message ?: e.toString())
@@ -173,10 +173,12 @@ class JcefMermaidRenderer : Disposable {
                     height = parts[3].toInt(),
                 )
             } else {
-                RenderOutcome.Failure(parts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: "unknown mermaid error")
+                RenderOutcome.Failure(
+                    parts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: MermaidBundle.message("render.error.unknown")
+                )
             }
         } catch (e: Exception) {
-            RenderOutcome.Failure("malformed renderer response: ${e.message}")
+            RenderOutcome.Failure(MermaidBundle.message("render.error.malformedResponse", e.message.orEmpty()))
         }
         future.complete(outcome)
     }
@@ -184,7 +186,8 @@ class JcefMermaidRenderer : Disposable {
     private fun js(value: String): String = "\"" + StringUtil.escapeStringCharacters(value) + "\""
 
     override fun dispose() {
-        pending.values.forEach { it.complete(RenderOutcome.Failure("the renderer was shut down")) }
+        val shutDown = RenderOutcome.Failure(MermaidBundle.message("render.error.shutDown"))
+        pending.values.forEach { it.complete(shutDown) }
         pending.clear()
         browser = null
     }

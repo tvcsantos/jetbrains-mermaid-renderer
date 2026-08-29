@@ -165,12 +165,16 @@ class RenderedDocumentationTest : BasePlatformTestCase() {
         }
     }
 
-    /** Exactly what [MermaidDocRenderItem] does to the HTML it is handed. */
+    /**
+     * Exactly what [MermaidDocRenderItem] does to the HTML it is handed, with the progress
+     * placeholder turned on so a diagram that has been recognised is observable in the output.
+     */
     private fun rewrite(html: String): String = MermaidHtmlRewriter.rewrite(
         html = html,
         heuristics = true,
         requestFor = { DiagramRequest.of(it) },
         resolve = { service<MermaidRenderService>().resolve(it, null) },
+        showProgress = true,
     ).html
 
     /** Documentation HTML as the IDE itself produces it for [text]. */

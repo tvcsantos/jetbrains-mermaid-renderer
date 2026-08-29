@@ -1,5 +1,7 @@
 package com.github.tvcsantos.mermaidrenderer.html
 
+import org.jsoup.parser.Parser
+
 /**
  * Finds ```` ```mermaid ```` fences in the *source* of a doc comment.
  *
@@ -12,9 +14,32 @@ package com.github.tvcsantos.mermaidrenderer.html
 object MermaidFences {
 
     private val FENCE_OPEN = Regex("^(`{3,}|~{3,})\\s*mermaid\\b.*$", RegexOption.IGNORE_CASE)
+    private val ANY_FENCE = Regex("^(`{3,}|~{3,}).*$")
+
+    private val HTML_BLOCK = Regex(
+        "<pre[^>]*class=[\"']([^\"']*)[\"'][^>]*>(.*?)</pre>",
+        setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
+    )
+
+    /**
+     * Every block in [commentText] that could be a diagram: any fence, plus HTML `<pre>` blocks.
+     * Used to ask which of a comment's diagrams failed, where the tag is not the deciding factor.
+     */
+    fun candidateBodies(commentText: String): Set<String> =
+        bodies(commentText, onlyMermaid = false) + htmlBodies(commentText)
+
+    private fun htmlBodies(commentText: String): Set<String> {
+        val undecorated = commentText.lineSequence().joinToString("\n") { undecorate(it) }
+        return HTML_BLOCK.findAll(undecorated)
+            .map { normalize(it.groupValues[2]) }
+            .filter { it.isNotEmpty() }
+            .toSet()
+    }
 
     /** Normalized bodies of every Mermaid fence in [commentText]. */
-    fun taggedBodies(commentText: String): Set<String> {
+    fun taggedBodies(commentText: String): Set<String> = bodies(commentText, onlyMermaid = true)
+
+    private fun bodies(commentText: String, onlyMermaid: Boolean): Set<String> {
         val bodies = mutableSetOf<String>()
         val body = StringBuilder()
         var fence: String? = null
@@ -23,7 +48,7 @@ object MermaidFences {
             val line = undecorate(rawLine)
             val open = fence
             if (open == null) {
-                val match = FENCE_OPEN.find(line) ?: continue
+                val match = (if (onlyMermaid) FENCE_OPEN else ANY_FENCE).find(line) ?: continue
                 fence = match.groupValues[1]
                 body.setLength(0)
             } else if (line.startsWith(open)) {
@@ -38,11 +63,17 @@ object MermaidFences {
     }
 
     /**
-     * Comparable form of a diagram: the rendered HTML and the comment source agree on the text but
-     * not necessarily on indentation, so only line content is compared.
+     * Comparable form of a diagram.
+     *
+     * The two sides differ in more than indentation: text taken from rendered HTML has had its
+     * entities decoded, while the comment source still reads `A --&gt;`. Both are decoded here so a
+     * diagram recorded from one side can be found from the other.
      */
-    fun normalize(text: String): String =
-        text.lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.joinToString("\n")
+    fun normalize(text: String): String = Parser.unescapeEntities(text, false)
+        .lineSequence()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .joinToString("\n")
 
     /** Strips doc comment decoration: the opening and closing markers, a leading star, and `///`. */
     private fun undecorate(line: String): String {

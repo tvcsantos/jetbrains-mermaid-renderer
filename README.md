@@ -21,7 +21,8 @@ class Order
 ````
 
 Toggle the rendered view (the gutter icon, or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd>) and the
-code block is replaced by the diagram.
+code block is replaced by the diagram. The same happens in the quick documentation popup, on hover
+and in the documentation tool window.
 
 ## How it works
 
@@ -47,8 +48,15 @@ starts with a Mermaid keyword such as `graph`, `flowchart`, `sequenceDiagram`, `
 
 ## Settings
 
-**Settings | Tools | Mermaid Renderer**: heuristic detection, diagram theme (follows the IDE theme by
-default), maximum width, render timeout, disk cache limit, and a button to clear the cache.
+**Settings | Tools | Mermaid Renderer**: heuristic detection, the placeholder shown while a diagram
+is rendering, the gutter icon for diagrams that fail to render - both off by default, so a broken
+diagram is reported only in the IDE log until you ask for it - diagram
+theme (follows the IDE theme by default), maximum width, render timeout, disk cache limit, and a
+button to clear the cache.
+
+A diagram Mermaid cannot parse never appears in the documentation itself: the comment keeps the code
+block as written, and the error is shown by a gutter icon beside the declaration - hover for the
+message, click for the full text.
 
 ## Building
 

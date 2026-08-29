@@ -42,17 +42,19 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
             val service = service<MermaidRenderService>()
             val generation = service.generation
 
-            cached?.let { if (it.generation == generation && it.source == source) return it.html }
-
-            val html = rewrite(source, service)
-            cached = Rewritten(source, generation, html)
-            return html
+            return rewritten(source, service, generation).html
         }
 
-    private fun rewrite(source: String, service: MermaidRenderService): String {
+    private fun rewritten(source: String, service: MermaidRenderService, generation: Long): Rewritten {
+        cached?.let { if (it.generation == generation && it.source == source) return it }
+        val result = rewrite(source, service)
+        return Rewritten(source, generation, result.html).also { cached = it }
+    }
+
+    private fun rewrite(source: String, service: MermaidRenderService): RewriteResult {
         // Cheap reject: documentation without a code block cannot hold a diagram.
         if (!source.contains("<pre", ignoreCase = true) && !source.contains("mermaid", ignoreCase = true)) {
-            return source
+            return RewriteResult(source, candidates = 0, matched = 0)
         }
 
         return try {
@@ -65,12 +67,17 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
                 requestFor = { DiagramRequest.of(it, settings) },
                 resolve = { service.resolve(it, target) },
                 isTagged = tagged::contains,
+                showProgress = settings.showRenderingProgress,
             )
             reportOnce(result)
-            result.html
+            target?.let {
+                val offset = delegate.highlighter.takeIf { h -> h.isValid }?.startOffset ?: 0
+                it.project.service<DocRenderRefresher>().syncMarkers(it.file, offset, result.failed)
+            }
+            result
         } catch (e: Exception) {
             logger<MermaidDocRenderItem>().warn("Cannot rewrite rendered documentation", e)
-            source
+            RewriteResult(source, candidates = 0, matched = 0)
         }
     }
 
@@ -118,6 +125,11 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
 
     override val editor: Editor get() = delegate.editor
 
+    /**
+     * Plain delegation, and it has to stay that way: the platform casts the result back to its own
+     * `DocRenderItemImpl.MyGutterIconRenderer`, so any other implementation throws a
+     * ClassCastException on every gutter repaint - which takes the whole gutter down with it.
+     */
     override fun calcFoldingGutterIconRenderer(): GutterIconRenderer? = delegate.calcFoldingGutterIconRenderer()
 
     override fun setIconVisible(visible: Boolean) = delegate.setIconVisible(visible)
