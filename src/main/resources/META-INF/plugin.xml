@@ -1,0 +1,45 @@
+<idea-plugin>
+    <id>com.github.tvcsantos.mermaidrender</id>
+    <name>Mermaid Render</name>
+    <vendor url="https://github.com/tvcsantos">tvcsantos</vendor>
+
+    <description><![CDATA[
+    Renders <a href="https://mermaid.js.org">Mermaid</a> diagrams inside IntelliJ's
+    <b>Rendered Documentation Comments</b>.
+    <p>
+    A <code>mermaid</code> code block in a KDoc or Javadoc comment is replaced by the rendered
+    diagram when the comment is shown in its rendered form (<i>Toggle Rendered View</i>).
+    Diagrams are rendered locally with a bundled copy of mermaid.js - no network access, no
+    external tools.
+    </p>
+    ]]></description>
+
+    <depends>com.intellij.modules.lang</depends>
+    <!-- Diagrams are rasterized by the embedded browser; without it there is nothing to render. -->
+    <depends>com.intellij.modules.jcef</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- order=last: the platform keeps one rendered item per range and the last one wins. -->
+        <platform.backend.documentation.inlineDocumentationProvider
+                order="last"
+                implementation="com.github.tvcsantos.mermaidrender.inline.MermaidInlineDocumentationProvider"/>
+
+        <!-- order=first: the gutter toggle resolves documentation with first-non-null instead. -->
+        <platform.backend.documentation.inlineDocumentationProvider
+                order="first"
+                implementation="com.github.tvcsantos.mermaidrender.inline.MermaidInlineDocumentationFinder"/>
+
+        <applicationConfigurable
+                parentId="tools"
+                id="com.github.tvcsantos.mermaidrender.settings"
+                instance="com.github.tvcsantos.mermaidrender.settings.MermaidConfigurable"
+                displayName="Mermaid Render"/>
+    </extensions>
+
+    <applicationListeners>
+        <listener class="com.github.tvcsantos.mermaidrender.render.MermaidThemeChangeListener"
+                  topic="com.intellij.ide.ui.LafManagerListener"/>
+        <listener class="com.github.tvcsantos.mermaidrender.render.MermaidThemeChangeListener"
+                  topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+    </applicationListeners>
+</idea-plugin>

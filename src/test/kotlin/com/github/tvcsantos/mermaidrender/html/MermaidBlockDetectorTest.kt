@@ -1,0 +1,70 @@
+package com.github.tvcsantos.mermaidrender.html
+
+import org.jsoup.Jsoup
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class MermaidBlockDetectorTest {
+
+    private fun firstBlock(html: String) = Jsoup.parse(html).select("pre, .mermaid").first()!!
+
+    @Test
+    fun `detects a language-mermaid fence`() {
+        val element = firstBlock("<pre><code class=\"language-mermaid\">graph TD;\n  A--&gt;B;</code></pre>")
+        assertEquals("graph TD;\n  A-->B;", MermaidBlockDetector.mermaidSource(element, heuristics = false))
+    }
+
+    @Test
+    fun `detects a pre with a mermaid class`() {
+        val element = firstBlock("<pre class=\"mermaid\">sequenceDiagram\n  A->>B: hi</pre>")
+        assertEquals("sequenceDiagram\n  A->>B: hi", MermaidBlockDetector.mermaidSource(element, heuristics = false))
+    }
+
+    @Test
+    fun `strips a leading mermaid info line`() {
+        val element = firstBlock("<pre><code>mermaid\nflowchart LR\n  A --&gt; B</code></pre>")
+        assertEquals("flowchart LR\n  A --> B", MermaidBlockDetector.mermaidSource(element, heuristics = false))
+    }
+
+    @Test
+    fun `heuristics pick up an untagged diagram`() {
+        val element = firstBlock("<pre><code>stateDiagram-v2\n  [*] --&gt; Idle</code></pre>")
+        assertNull(MermaidBlockDetector.mermaidSource(element, heuristics = false))
+        assertEquals(
+            "stateDiagram-v2\n  [*] --> Idle",
+            MermaidBlockDetector.mermaidSource(element, heuristics = true),
+        )
+    }
+
+    @Test
+    fun `line breaks encoded as br are preserved`() {
+        val element = firstBlock(
+            "<pre><code><span>graph TD;<br></span><span>  A --&gt; B;</span></code></pre>"
+        )
+        assertEquals("graph TD;\n  A --> B;", MermaidBlockDetector.mermaidSource(element, heuristics = true))
+    }
+
+    @Test
+    fun `leaves ordinary code alone`() {
+        val element = firstBlock("<pre><code>val graphics = 1</code></pre>")
+        assertNull(MermaidBlockDetector.mermaidSource(element, heuristics = true))
+    }
+
+    @Test
+    fun `keyword match requires a word boundary`() {
+        assertTrue(MermaidBlockDetector.looksLikeMermaid("graph TD"))
+        assertTrue(MermaidBlockDetector.looksLikeMermaid("gantt"))
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("graphics.draw()"))
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("pieChartBuilder()"))
+    }
+
+    @Test
+    fun `file pre-filter matches tagged and untagged diagrams`() {
+        assertTrue(MermaidBlockDetector.mayContainMermaid("/** ```mermaid */", heuristics = false))
+        assertFalse(MermaidBlockDetector.mayContainMermaid("class A", heuristics = false))
+        assertTrue(MermaidBlockDetector.mayContainMermaid("/** flowchart LR */", heuristics = true))
+    }
+}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>mermaid-render host</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; }
+    /* Diagrams are rasterized, never shown; keep them out of the way. */
+    #host { position: absolute; left: -10000px; top: 0; }
+  </style>
+</head>
+<body>
+<div id="host"></div>
+<script src="mermaid.min.js"></script>
+<script>
+  (function () {
+    var counter = 0;
+
+    // Replies are '\u0001'-separated so the Kotlin side needs no JSON parser:
+    //   <id> OK  <width> <height> <base64 png>
+    //   <id> ERR <message>
+    function reply(parts) {
+      // window.__mermaidCallback is installed from Kotlin via JBCefJSQuery.inject().
+      if (typeof window.__mermaidCallback === 'function') {
+        window.__mermaidCallback(parts.join('\u0001'));
+      }
+    }
+
+    function replyError(id, message) {
+      reply([id, 'ERR', String(message)]);
+    }
+
+    function toBase64(text) {
+      var bytes = new TextEncoder().encode(text);
+      var binary = '';
+      for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    }
+
+    function sizeOf(root, maxWidth) {
+      var w, h;
+      var viewBox = (root.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+      if (viewBox.length === 4 && viewBox.every(function (n) { return !isNaN(n); })) {
+        w = viewBox[2];
+        h = viewBox[3];
+      } else {
+        w = parseFloat(root.getAttribute('width')) || 800;
+        h = parseFloat(root.getAttribute('height')) || 600;
+      }
+      if (maxWidth > 0 && w > maxWidth) {
+        h = h * (maxWidth / w);
+        w = maxWidth;
+      }
+      return { w: Math.max(1, w), h: Math.max(1, h) };
+    }
+
+    function rasterize(id, svg, scale, maxWidth, background) {
+      var root = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
+      if (root.nodeName === 'parsererror' || root.getElementsByTagName('parsererror').length > 0) {
+        replyError(id, 'mermaid produced invalid SVG');
+        return;
+      }
+      var size = sizeOf(root, maxWidth);
+      // An SVG loaded as an image needs intrinsic dimensions, and max-width from mermaid's
+      // stylesheet would otherwise shrink it.
+      root.setAttribute('width', size.w);
+      root.setAttribute('height', size.h);
+      root.style.maxWidth = 'none';
+
+      var image = new Image();
+      image.onload = function () {
+        try {
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(size.w * scale));
+          canvas.height = Math.max(1, Math.round(size.h * scale));
+          var ctx = canvas.getContext('2d');
+          if (background && background !== 'transparent') {
+            ctx.fillStyle = background;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+          ctx.setTransform(scale, 0, 0, scale, 0, 0);
+          ctx.drawImage(image, 0, 0, size.w, size.h);
+          reply([
+            id,
+            'OK',
+            Math.round(size.w),
+            Math.round(size.h),
+            canvas.toDataURL('image/png').split(',')[1]
+          ]);
+        } catch (e) {
+          replyError(id, 'rasterization failed: ' + e);
+        }
+      };
+      image.onerror = function () {
+        replyError(id, 'the rendered SVG could not be decoded');
+      };
+      image.src = 'data:image/svg+xml;base64,' + toBase64(new XMLSerializer().serializeToString(root));
+    }
+
+    /**
+     * Called from Kotlin. Answers exactly once through window.__mermaidCallback with either
+     * {id, png, width, height} or {id, error}.
+     */
+    window.renderDiagram = function (id, code, theme, scale, maxWidth, background) {
+      try {
+        // htmlLabels must stay off: Chromium does not paint <foreignObject> content when an SVG
+        // is drawn onto a canvas, which would silently drop every label.
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: 'strict',
+          theme: theme,
+          htmlLabels: false,
+          flowchart: { htmlLabels: false },
+          class: { htmlLabels: false },
+          er: { htmlLabels: false },
+          fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+        });
+        var elementId = 'mermaid-render-' + (counter++);
+        mermaid.render(elementId, code, document.getElementById('host'))
+          .then(function (result) {
+            rasterize(id, result.svg, scale, maxWidth, background);
+          })
+          .catch(function (error) {
+            replyError(id, (error && error.message) || error);
+          });
+      } catch (e) {
+        replyError(id, (e && e.message) || e);
+      }
+    };
+
+    window.__mermaidReady = true;
+  })();
+</script>
+</body>
+</html>
