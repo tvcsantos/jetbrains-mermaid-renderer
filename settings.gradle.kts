@@ -1,4 +1,4 @@
-rootProject.name = "mermaid-render"
+rootProject.name = "mermaid-renderer"
 
 pluginManagement {
     repositories {

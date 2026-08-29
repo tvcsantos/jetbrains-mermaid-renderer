@@ -1,4 +1,4 @@
-package com.github.tvcsantos.mermaidrender.render
+package com.github.tvcsantos.mermaidrenderer.render
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
@@ -19,7 +19,7 @@ class MermaidThemeChangeListener : LafManagerListener, EditorColorsListener {
     override fun globalSchemeChange(scheme: EditorColorsScheme?) = refreshOpenFiles()
 
     private fun refreshOpenFiles() {
-        service<MermaidRenderService>().forgetFailures()
+        service<MermaidRenderService>().forgetFailures() // also bumps the rewrite generation
         for (project in ProjectManager.getInstance().openProjects) {
             if (project.isDisposed) continue
             val refresher = project.service<DocRenderRefresher>()

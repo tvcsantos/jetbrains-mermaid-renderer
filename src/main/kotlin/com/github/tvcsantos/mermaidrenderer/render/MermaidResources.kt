@@ -1,4 +1,4 @@
-package com.github.tvcsantos.mermaidrender.render
+package com.github.tvcsantos.mermaidrenderer.render
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
@@ -26,7 +26,7 @@ object MermaidResources {
         .getOrNull()
 
     private fun runtimeDirectory(): Path {
-        val directory = Path.of(PathManager.getSystemPath(), "mermaid-render", "runtime", version)
+        val directory = Path.of(PathManager.getSystemPath(), "mermaid-renderer", "runtime", version)
         Files.createDirectories(directory)
 
         val library = directory.resolve(LIBRARY)

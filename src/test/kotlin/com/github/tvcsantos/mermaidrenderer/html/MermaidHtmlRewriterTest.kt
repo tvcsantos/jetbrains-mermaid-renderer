@@ -1,8 +1,8 @@
-package com.github.tvcsantos.mermaidrender.html
+package com.github.tvcsantos.mermaidrenderer.html
 
-import com.github.tvcsantos.mermaidrender.render.CachedDiagram
-import com.github.tvcsantos.mermaidrender.render.DiagramRequest
-import com.github.tvcsantos.mermaidrender.render.DiagramState
+import com.github.tvcsantos.mermaidrenderer.render.CachedDiagram
+import com.github.tvcsantos.mermaidrenderer.render.DiagramRequest
+import com.github.tvcsantos.mermaidrenderer.render.DiagramState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -22,8 +22,8 @@ class MermaidHtmlRewriterTest {
         mermaidVersion = "test",
     ).also { requested += it }
 
-    private fun rewrite(html: String, heuristics: Boolean = true, state: (DiagramRequest) -> DiagramState) =
-        MermaidHtmlRewriter.rewrite(html, heuristics, ::request, state).html
+    private fun rewrite(html: String, state: (DiagramRequest) -> DiagramState) =
+        MermaidHtmlRewriter.rewrite(html, heuristics = true, requestFor = ::request, resolve = state).html
 
     @Test
     fun `a ready diagram becomes an image`() {

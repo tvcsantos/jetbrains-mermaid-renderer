@@ -1,4 +1,4 @@
-package com.github.tvcsantos.mermaidrender.render
+package com.github.tvcsantos.mermaidrenderer.render
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 /** What the HTML rewriter knows about a diagram right now. */
 sealed interface DiagramState {
@@ -28,11 +29,23 @@ data class RefreshTarget(val project: Project, val file: VirtualFile)
 @Service(Service.Level.APP)
 class MermaidRenderService : Disposable {
 
-    private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mermaid Render", 1)
+    private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mermaid Renderer", 1)
     private val inFlight = ConcurrentHashMap.newKeySet<String>()
 
     /** Remembered so a broken diagram is not re-rendered on every pass; cleared on settings change. */
     private val failures = ConcurrentHashMap<String, String>()
+
+    private val generationCounter = AtomicLong()
+
+    /**
+     * Rewritten HTML is memoized per rendered comment, so anything that changes the outcome of a
+     * rewrite - a diagram becoming available, a settings or theme change - has to bump this.
+     */
+    val generation: Long get() = generationCounter.get()
+
+    private fun bumpGeneration() {
+        generationCounter.incrementAndGet()
+    }
 
     fun resolve(request: DiagramRequest, target: RefreshTarget?): DiagramState {
         service<DiagramCache>().get(request.cacheKey)?.let { return DiagramState.Ready(it) }
@@ -60,13 +73,18 @@ class MermaidRenderService : Disposable {
             inFlight.remove(request.cacheKey)
         }
 
+        bumpGeneration()
+
         if (target != null && !target.project.isDisposed) {
             target.project.service<DocRenderRefresher>().scheduleRefresh(target.file)
         }
     }
 
     /** Lets diagrams that previously failed be retried, e.g. after settings changed. */
-    fun forgetFailures() = failures.clear()
+    fun forgetFailures() {
+        failures.clear()
+        bumpGeneration()
+    }
 
     override fun dispose() {
         executor.shutdownNow()

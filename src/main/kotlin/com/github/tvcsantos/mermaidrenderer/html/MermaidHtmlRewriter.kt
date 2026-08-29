@@ -1,9 +1,9 @@
-package com.github.tvcsantos.mermaidrender.html
+package com.github.tvcsantos.mermaidrenderer.html
 
-import com.github.tvcsantos.mermaidrender.MermaidBundle
-import com.github.tvcsantos.mermaidrender.render.CachedDiagram
-import com.github.tvcsantos.mermaidrender.render.DiagramRequest
-import com.github.tvcsantos.mermaidrender.render.DiagramState
+import com.github.tvcsantos.mermaidrenderer.MermaidBundle
+import com.github.tvcsantos.mermaidrenderer.render.CachedDiagram
+import com.github.tvcsantos.mermaidrenderer.render.DiagramRequest
+import com.github.tvcsantos.mermaidrenderer.render.DiagramState
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 

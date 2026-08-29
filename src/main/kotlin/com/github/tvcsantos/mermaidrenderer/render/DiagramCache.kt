@@ -1,6 +1,6 @@
-package com.github.tvcsantos.mermaidrender.render
+package com.github.tvcsantos.mermaidrenderer.render
 
-import com.github.tvcsantos.mermaidrender.settings.MermaidSettings
+import com.github.tvcsantos.mermaidrenderer.settings.MermaidSettings
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -27,7 +27,7 @@ data class CachedDiagram(val path: Path, val width: Int, val height: Int) {
 class DiagramCache {
 
     private val log = logger<DiagramCache>()
-    private val root: Path = Path.of(PathManager.getSystemPath(), "mermaid-render", "cache")
+    private val root: Path = Path.of(PathManager.getSystemPath(), "mermaid-renderer", "cache")
     private val index = ConcurrentHashMap<String, CachedDiagram>()
     private val scanned = AtomicBoolean(false)
 

@@ -63,16 +63,17 @@ intellijPlatform {
             create(IntelliJPlatformType.IntellijIdea, providers.gradleProperty("platformVersion").get())
         }
 
-        // Decorating another provider's rendered documentation has no public API: it needs
-        // InlineDocumentationProvider.EP_NAME and DocRenderPassFactory (both @Internal), and it
-        // calls @OverrideOnly methods on the providers it delegates to. Both are deliberate and
-        // fail soft - a diagram just does not appear. Real compatibility breakage still fails.
+        // Rewriting rendered documentation has no public API: the seam (DocRendererProvider,
+        // DocRenderItem, DocRenderItemUpdater) is @Internal. That is deliberate and fails soft - a
+        // diagram just does not appear, and MermaidSeamCheck reports it. Everything else, including
+        // @OverrideOnly misuse, still fails the build.
         failureLevel = listOf(
             VerifyPluginTask.FailureLevel.COMPATIBILITY_PROBLEMS,
             VerifyPluginTask.FailureLevel.INVALID_PLUGIN,
             VerifyPluginTask.FailureLevel.MISSING_DEPENDENCIES,
             VerifyPluginTask.FailureLevel.PLUGIN_STRUCTURE_WARNINGS,
             VerifyPluginTask.FailureLevel.NON_EXTENDABLE_API_USAGES,
+            VerifyPluginTask.FailureLevel.OVERRIDE_ONLY_API_USAGES,
             VerifyPluginTask.FailureLevel.SCHEDULED_FOR_REMOVAL_API_USAGES,
         )
     }

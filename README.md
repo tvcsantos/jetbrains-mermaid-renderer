@@ -1,4 +1,4 @@
-# Mermaid Render
+# Mermaid Renderer
 
 An IntelliJ plugin that renders [Mermaid](https://mermaid.js.org) diagrams inside the IDE's
 **Rendered Documentation Comments**.
@@ -47,7 +47,7 @@ starts with a Mermaid keyword such as `graph`, `flowchart`, `sequenceDiagram`, `
 
 ## Settings
 
-**Settings | Tools | Mermaid Render**: heuristic detection, diagram theme (follows the IDE theme by
+**Settings | Tools | Mermaid Renderer**: heuristic detection, diagram theme (follows the IDE theme by
 default), maximum width, render timeout, disk cache limit, and a button to clear the cache.
 
 ## Building

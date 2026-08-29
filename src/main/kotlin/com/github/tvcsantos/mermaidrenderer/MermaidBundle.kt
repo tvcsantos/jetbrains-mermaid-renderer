@@ -1,4 +1,4 @@
-package com.github.tvcsantos.mermaidrender
+package com.github.tvcsantos.mermaidrenderer
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls

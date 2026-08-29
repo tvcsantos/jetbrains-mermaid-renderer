@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>mermaid-render host</title>
+  <title>mermaid-renderer host</title>
   <style>
     html, body { margin: 0; padding: 0; background: transparent; }
     /* Diagrams are rasterized, never shown; keep them out of the way. */
@@ -115,7 +115,7 @@
           er: { htmlLabels: false },
           fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
         });
-        var elementId = 'mermaid-render-' + (counter++);
+        var elementId = 'mermaid-renderer-' + (counter++);
         mermaid.render(elementId, code, document.getElementById('host'))
           .then(function (result) {
             rasterize(id, result.svg, scale, maxWidth, background);
@@ -128,7 +128,6 @@
       }
     };
 
-    window.__mermaidReady = true;
   })();
 </script>
 </body>

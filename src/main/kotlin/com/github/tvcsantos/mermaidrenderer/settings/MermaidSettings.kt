@@ -1,4 +1,4 @@
-package com.github.tvcsantos.mermaidrender.settings
+package com.github.tvcsantos.mermaidrenderer.settings
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -21,7 +21,7 @@ enum class ThemeMode(val displayName: String, val mermaidTheme: String?) {
 }
 
 @Service(Service.Level.APP)
-@State(name = "MermaidRender", storages = [Storage("mermaid-render.xml")])
+@State(name = "MermaidRenderer", storages = [Storage("mermaid-renderer.xml")])
 class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
 
     class State {

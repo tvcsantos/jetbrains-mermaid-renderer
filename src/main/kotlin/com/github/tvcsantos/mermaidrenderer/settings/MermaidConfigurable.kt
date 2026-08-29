@@ -1,8 +1,8 @@
-package com.github.tvcsantos.mermaidrender.settings
+package com.github.tvcsantos.mermaidrenderer.settings
 
-import com.github.tvcsantos.mermaidrender.MermaidBundle
-import com.github.tvcsantos.mermaidrender.render.DiagramCache
-import com.github.tvcsantos.mermaidrender.render.MermaidRenderService
+import com.github.tvcsantos.mermaidrenderer.MermaidBundle
+import com.github.tvcsantos.mermaidrenderer.render.DiagramCache
+import com.github.tvcsantos.mermaidrenderer.render.MermaidRenderService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel

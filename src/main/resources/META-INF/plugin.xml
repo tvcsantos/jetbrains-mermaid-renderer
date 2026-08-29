@@ -1,6 +1,6 @@
 <idea-plugin>
-    <id>com.github.tvcsantos.mermaidrender</id>
-    <name>Mermaid Render</name>
+    <id>com.github.tvcsantos.mermaidrenderer</id>
+    <name>Mermaid Renderer</name>
     <vendor url="https://github.com/tvcsantos">tvcsantos</vendor>
 
     <description><![CDATA[
@@ -19,27 +19,31 @@
     <depends>com.intellij.modules.jcef</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- order=last: the platform keeps one rendered item per range and the last one wins. -->
-        <platform.backend.documentation.inlineDocumentationProvider
-                order="last"
-                implementation="com.github.tvcsantos.mermaidrender.inline.MermaidInlineDocumentationProvider"/>
+        <!--
+          The single seam: DocRenderItemManagerImpl builds every rendered comment through this
+          service, so replacing it (the platform marks it open="true") covers the render pass, the
+          gutter toggle and refreshes without depending on extension ordering.
+        -->
+        <applicationService
+                serviceInterface="com.intellij.codeInsight.documentation.render.DocRendererProvider"
+                serviceImplementation="com.github.tvcsantos.mermaidrenderer.render.MermaidDocRendererProvider"
+                overrides="true"/>
 
-        <!-- order=first: the gutter toggle resolves documentation with first-non-null instead. -->
-        <platform.backend.documentation.inlineDocumentationProvider
-                order="first"
-                implementation="com.github.tvcsantos.mermaidrender.inline.MermaidInlineDocumentationFinder"/>
+        <postStartupActivity implementation="com.github.tvcsantos.mermaidrenderer.render.MermaidSeamCheck"/>
+
+        <notificationGroup id="Mermaid Renderer" displayType="BALLOON"/>
 
         <applicationConfigurable
                 parentId="tools"
-                id="com.github.tvcsantos.mermaidrender.settings"
-                instance="com.github.tvcsantos.mermaidrender.settings.MermaidConfigurable"
-                displayName="Mermaid Render"/>
+                id="com.github.tvcsantos.mermaidrenderer.settings"
+                instance="com.github.tvcsantos.mermaidrenderer.settings.MermaidConfigurable"
+                displayName="Mermaid Renderer"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.tvcsantos.mermaidrender.render.MermaidThemeChangeListener"
+        <listener class="com.github.tvcsantos.mermaidrenderer.render.MermaidThemeChangeListener"
                   topic="com.intellij.ide.ui.LafManagerListener"/>
-        <listener class="com.github.tvcsantos.mermaidrender.render.MermaidThemeChangeListener"
+        <listener class="com.github.tvcsantos.mermaidrenderer.render.MermaidThemeChangeListener"
                   topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
     </applicationListeners>
 </idea-plugin>

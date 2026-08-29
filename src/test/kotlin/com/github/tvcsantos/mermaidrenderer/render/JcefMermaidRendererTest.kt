@@ -1,4 +1,4 @@
-package com.github.tvcsantos.mermaidrender.render
+package com.github.tvcsantos.mermaidrenderer.render
 
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

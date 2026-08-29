@@ -1,4 +1,4 @@
-package com.github.tvcsantos.mermaidrender.html
+package com.github.tvcsantos.mermaidrenderer.html
 
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
@@ -85,19 +85,4 @@ object MermaidBlockDetector {
                 head.getOrNull(keyword.length)?.let { !it.isLetterOrDigit() && it != '_' } ?: true
         }
     }
-
-    /**
-     * Cheap pre-filter over a whole file, so files without diagrams cost almost nothing.
-     * Word boundaries matter here: a substring match would let `copied` pass as `pie`.
-     */
-    fun mayContainMermaid(text: CharSequence, heuristics: Boolean): Boolean {
-        if (text.contains("mermaid", ignoreCase = true)) return true
-        if (!heuristics) return false
-        return KEYWORD_PATTERN.containsMatchIn(text)
-    }
-
-    private val KEYWORD_PATTERN = Regex(
-        KEYWORDS.joinToString(prefix = "\\b(?:", separator = "|", postfix = ")\\b") { Regex.escape(it) },
-        RegexOption.IGNORE_CASE,
-    )
 }

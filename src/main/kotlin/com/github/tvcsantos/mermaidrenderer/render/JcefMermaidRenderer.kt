@@ -1,7 +1,7 @@
-package com.github.tvcsantos.mermaidrender.render
+package com.github.tvcsantos.mermaidrenderer.render
 
-import com.github.tvcsantos.mermaidrender.MermaidBundle
-import com.github.tvcsantos.mermaidrender.settings.MermaidSettings
+import com.github.tvcsantos.mermaidrenderer.MermaidBundle
+import com.github.tvcsantos.mermaidrenderer.settings.MermaidSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -34,7 +34,7 @@ import kotlin.concurrent.withLock
  * canvas and hands back PNG bytes. The browser is created once and kept alive for the session.
  */
 @Service(Service.Level.APP)
-class JcefMermaidRenderer : MermaidImageRenderer, Disposable {
+class JcefMermaidRenderer : Disposable {
 
     private val log = logger<JcefMermaidRenderer>()
 
@@ -51,7 +51,8 @@ class JcefMermaidRenderer : MermaidImageRenderer, Disposable {
     @Volatile
     private var pageLoaded = CountDownLatch(1)
 
-    override fun render(request: DiagramRequest): RenderOutcome {
+    /** Blocking; must not be called on EDT or while holding a read lock. */
+    fun render(request: DiagramRequest): RenderOutcome {
         if (!JBCefApp.isSupported()) {
             return RenderOutcome.Failure(MermaidBundle.message("jcef.unavailable"))
         }

@@ -1,4 +1,4 @@
-package com.github.tvcsantos.mermaidrender.html
+package com.github.tvcsantos.mermaidrenderer.html
 
 import org.jsoup.Jsoup
 import org.junit.Assert.assertEquals
@@ -59,12 +59,5 @@ class MermaidBlockDetectorTest {
         assertTrue(MermaidBlockDetector.looksLikeMermaid("gantt"))
         assertFalse(MermaidBlockDetector.looksLikeMermaid("graphics.draw()"))
         assertFalse(MermaidBlockDetector.looksLikeMermaid("pieChartBuilder()"))
-    }
-
-    @Test
-    fun `file pre-filter matches tagged and untagged diagrams`() {
-        assertTrue(MermaidBlockDetector.mayContainMermaid("/** ```mermaid */", heuristics = false))
-        assertFalse(MermaidBlockDetector.mayContainMermaid("class A", heuristics = false))
-        assertTrue(MermaidBlockDetector.mayContainMermaid("/** flowchart LR */", heuristics = true))
     }
 }
