@@ -23,6 +23,7 @@ object MermaidHtmlRewriter {
         heuristics: Boolean,
         requestFor: (String) -> DiagramRequest,
         resolve: (DiagramRequest) -> DiagramState,
+        isTagged: (String) -> Boolean = { false },
     ): RewriteResult {
         val document = Jsoup.parse(html)
         document.outputSettings().prettyPrint(false)
@@ -35,7 +36,7 @@ object MermaidHtmlRewriter {
         var matched = 0
         for (element in candidates) {
             if (!element.hasParent()) continue
-            val source = MermaidBlockDetector.mermaidSource(element, heuristics) ?: continue
+            val source = MermaidBlockDetector.mermaidSource(element, heuristics, isTagged) ?: continue
             matched++
             when (val state = resolve(requestFor(source))) {
                 is DiagramState.Ready -> element.replaceWith(image(state.diagram))

@@ -1,7 +1,6 @@
 package com.github.tvcsantos.mermaidrenderer.html
 
 import org.jsoup.nodes.Element
-import org.jsoup.nodes.TextNode
 
 /**
  * Decides whether a rendered code block holds a Mermaid diagram.
@@ -41,14 +40,24 @@ object MermaidBlockDetector {
         "treemap-beta",
     )
 
-    /** Mermaid source of [element], or `null` when it is an ordinary code block. */
-    fun mermaidSource(element: Element, heuristics: Boolean): String? {
+    /**
+     * Mermaid source of [element], or `null` when it is an ordinary code block.
+     *
+     * [isTagged] is asked whether a block's body was fenced as ```` ```mermaid ```` in the comment
+     * source - the only reliable marker once syntax highlighting has consumed the info string.
+     */
+    fun mermaidSource(
+        element: Element,
+        heuristics: Boolean,
+        isTagged: (String) -> Boolean = { false },
+    ): String? {
         val code = element.selectFirst("code")
         val text = sourceOf(code ?: element)
         if (text.isBlank()) return null
 
         val classes = (element.className() + " " + code?.className().orEmpty()).lowercase()
         if (classes.contains("mermaid")) return text
+        if (isTagged(MermaidFences.normalize(text))) return text
 
         val lines = text.lines()
         val firstIndex = lines.indexOfFirst { it.isNotBlank() }
@@ -68,14 +77,11 @@ object MermaidBlockDetector {
      * Text of a code block as Mermaid needs to see it.
      *
      * When the fence language is known - the bundled Mermaid plugin gives ```` ```mermaid ```` a
-     * Language - the platform emits syntax-highlighted code whose line breaks are `<br>` elements,
-     * which `wholeText()` drops. Losing them would hand Mermaid a single unparseable line.
+     * Language - the platform emits syntax-highlighted code whose line breaks are `<br>` elements.
+     * jsoup's `wholeText()` turns those back into newlines, which the detector tests pin down.
      */
-    private fun sourceOf(element: Element): String {
-        val copy = element.clone()
-        copy.select("br").forEach { it.replaceWith(TextNode("\n")) }
-        return copy.wholeText().trim('\n', '\r').trimEnd()
-    }
+    private fun sourceOf(element: Element): String =
+        element.wholeText().trim('\n', '\r').trimEnd()
 
     /** `true` when [text] starts with a Mermaid diagram declaration. */
     fun looksLikeMermaid(text: String): Boolean {

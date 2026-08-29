@@ -1,5 +1,6 @@
 package com.github.tvcsantos.mermaidrenderer.render
 
+import com.github.tvcsantos.mermaidrenderer.html.MermaidFences
 import com.github.tvcsantos.mermaidrenderer.html.MermaidHtmlRewriter
 import com.github.tvcsantos.mermaidrenderer.html.RewriteResult
 import com.github.tvcsantos.mermaidrenderer.settings.MermaidSettings
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.InlineDocumentation
 import java.util.concurrent.atomic.AtomicBoolean
@@ -56,11 +58,13 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
         return try {
             val settings = MermaidSettings.getInstance()
             val target = refreshTarget()
+            val tagged = taggedBodies()
             val result = MermaidHtmlRewriter.rewrite(
                 html = source,
                 heuristics = settings.heuristicDetection,
                 requestFor = { DiagramRequest.of(it, settings) },
                 resolve = { service.resolve(it, target) },
+                isTagged = tagged::contains,
             )
             reportOnce(result)
             result.html
@@ -68,6 +72,25 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
             logger<MermaidDocRenderItem>().warn("Cannot rewrite rendered documentation", e)
             source
         }
+    }
+
+    /**
+     * The ```` ```mermaid ```` fences of the comment this item renders. Read from the document
+     * because syntax highlighting strips the marker before it reaches the HTML.
+     */
+    private fun taggedBodies(): Set<String> = try {
+        val highlighter = delegate.highlighter
+        if (!highlighter.isValid) {
+            emptySet()
+        } else {
+            val document = delegate.editor.document
+            val end = highlighter.endOffset.coerceAtMost(document.textLength)
+            val start = highlighter.startOffset.coerceAtMost(end)
+            MermaidFences.taggedBodies(document.getText(TextRange(start, end)))
+        }
+    } catch (e: Exception) {
+        logger<MermaidDocRenderItem>().warn("Cannot read the comment source", e)
+        emptySet()
     }
 
     private fun refreshTarget(): RefreshTarget? {

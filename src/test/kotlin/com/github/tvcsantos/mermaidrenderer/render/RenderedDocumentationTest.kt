@@ -1,6 +1,7 @@
 package com.github.tvcsantos.mermaidrenderer.render
 
 import com.github.tvcsantos.mermaidrenderer.html.MermaidBlockDetector
+import com.github.tvcsantos.mermaidrenderer.html.MermaidFences
 import com.github.tvcsantos.mermaidrenderer.html.MermaidHtmlRewriter
 import com.intellij.codeInsight.documentation.render.DocRendererProvider
 import com.intellij.openapi.application.ReadAction
@@ -95,6 +96,37 @@ class RenderedDocumentationTest : BasePlatformTestCase() {
         assertNotNull("The diagram was not detected in: $html", source)
         assertTrue("Line breaks were lost: $source", source!!.lines().size >= 3)
         assertTrue(source.startsWith("stateDiagram-v2"))
+    }
+
+    /**
+     * A tagged fence must render even with the keyword heuristic switched off - which needs the
+     * marker read from the comment source, because highlighting consumed it before the HTML.
+     */
+    fun testTaggedFenceIsDetectedWithoutTheHeuristic() {
+        val text = """
+            /**
+             * ```mermaid
+             * stateDiagram-v2
+             *     [*] --> Draft
+             * ```
+             */
+            class Tagged
+        """.trimIndent()
+        val html = platformHtml("Tagged.kt", text)
+        val blocks = Jsoup.parse(html).select("pre")
+
+        assertNull(
+            "Nothing should be detected from the HTML alone: $html",
+            blocks.firstNotNullOfOrNull { MermaidBlockDetector.mermaidSource(it, heuristics = false) },
+        )
+
+        val tagged = MermaidFences.taggedBodies(text)
+        val source = blocks.firstNotNullOfOrNull {
+            MermaidBlockDetector.mermaidSource(it, heuristics = false, isTagged = tagged::contains)
+        }
+
+        assertNotNull("The fence from the comment source was not matched: $html", source)
+        assertTrue(source!!.startsWith("stateDiagram-v2"))
     }
 
     fun testCachedDiagramIsEmbeddedAsAnImage() {

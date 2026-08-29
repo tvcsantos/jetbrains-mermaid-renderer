@@ -48,6 +48,21 @@ class MermaidBlockDetectorTest {
     }
 
     @Test
+    fun `a body tagged in the comment source is detected without heuristics`() {
+        val element = firstBlock("<pre><code><span>graph TD;<br></span><span>  A --&gt; B;</span></code></pre>")
+
+        assertNull(MermaidBlockDetector.mermaidSource(element, heuristics = false))
+        assertEquals(
+            "graph TD;\n  A --> B;",
+            MermaidBlockDetector.mermaidSource(
+                element,
+                heuristics = false,
+                isTagged = setOf("graph TD;\nA --> B;")::contains,
+            ),
+        )
+    }
+
+    @Test
     fun `leaves ordinary code alone`() {
         val element = firstBlock("<pre><code>val graphics = 1</code></pre>")
         assertNull(MermaidBlockDetector.mermaidSource(element, heuristics = true))
