@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * A popup is computed once and shown; unlike a rendered comment there is no inlay to refresh when a
  * diagram arrives a moment later. The platform's answer is an updates flow whose emissions replace
  * the browser content, so this polls the rewrite until nothing is pending and emits whenever the
- * documentation actually changed. Collection is cancelled by the platform when the popup closes.
+ * documentation actually changed. Collection is canceled by the platform when the popup closes.
  */
 internal object DiagramUpdates {
 

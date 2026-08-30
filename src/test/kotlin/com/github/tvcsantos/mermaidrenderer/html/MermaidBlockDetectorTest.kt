@@ -85,6 +85,7 @@ class MermaidBlockDetectorTest {
         assertFalse(MermaidBlockDetector.looksLikeMermaid("graph.addNode(x)"))
         assertFalse(MermaidBlockDetector.looksLikeMermaid("pie.slice(3)"))
         assertFalse(MermaidBlockDetector.looksLikeMermaid("timeline.push(event)"))
+        @Suppress("SpellCheckingInspection")
         assertFalse(MermaidBlockDetector.looksLikeMermaid("gantt->render()"))
     }
 
@@ -95,6 +96,7 @@ class MermaidBlockDetectorTest {
 
     @Test
     fun `configuration that starts with a keyword is not a diagram`() {
+        @Suppress("SpellCheckingInspection")
         assertFalse(MermaidBlockDetector.looksLikeMermaid("graph: mygraph"))
         assertFalse(MermaidBlockDetector.looksLikeMermaid("timeline: 2026"))
         assertFalse(MermaidBlockDetector.looksLikeMermaid("pie: 3"))

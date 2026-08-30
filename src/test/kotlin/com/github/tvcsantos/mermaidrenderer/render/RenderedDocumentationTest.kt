@@ -93,7 +93,7 @@ class RenderedDocumentationTest : BasePlatformTestCase() {
         assertTrue("Expected highlighted code with <br>: $html", html.contains("<br>"))
 
         // Highlighting replaces the ```mermaid info string, so the language-mermaid class is gone
-        // and a tagged fence is recognised by the keyword heuristic like an untagged one.
+        // and a tagged fence is recognized by the keyword heuristic like an untagged one.
         val source = Jsoup.parse(html).select("pre")
             .firstNotNullOfOrNull { MermaidBlockDetector.mermaidSource(it, heuristics = true) }
 
@@ -171,7 +171,7 @@ class RenderedDocumentationTest : BasePlatformTestCase() {
 
     /**
      * Exactly what [MermaidDocRenderItem] does to the HTML it is handed, with the progress
-     * placeholder turned on so a diagram that has been recognised is observable in the output.
+     * placeholder turned on so a diagram that has been recognized is observable in the output.
      */
     private fun rewrite(html: String): String = MermaidHtmlRewriter.rewrite(
         html = html,

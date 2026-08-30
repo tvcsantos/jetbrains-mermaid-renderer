@@ -50,8 +50,6 @@ class MermaidDocumentationTarget(private val delegate: DocumentationTarget) : Do
                 else -> documentation
             }
         }
-
-        else -> result
     }
 
     private fun rewrite(documentation: DocumentationData): DocumentationData = try {

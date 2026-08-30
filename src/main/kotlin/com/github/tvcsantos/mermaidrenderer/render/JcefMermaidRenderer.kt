@@ -52,6 +52,7 @@ class JcefMermaidRenderer : Disposable {
     private var pageLoaded = CountDownLatch(1)
 
     /** Blocking; must not be called on EDT or while holding a read lock. */
+    @Suppress("UnstableApiUsage")
     fun render(request: DiagramRequest): RenderOutcome {
         if (!JBCefApp.isSupported()) {
             return RenderOutcome.Failure(MermaidBundle.message("jcef.unavailable"))
@@ -86,7 +87,7 @@ class JcefMermaidRenderer : Disposable {
                 }
                 browser.cefBrowser.executeJavaScript(script, browser.cefBrowser.url, 0)
                 return future.get(timeout, TimeUnit.SECONDS)
-            } catch (e: TimeoutException) {
+            } catch (_: TimeoutException) {
                 return RenderOutcome.Failure(MermaidBundle.message("render.error.timeout", timeout))
             } catch (e: Exception) {
                 log.warn("Mermaid rendering failed", e)

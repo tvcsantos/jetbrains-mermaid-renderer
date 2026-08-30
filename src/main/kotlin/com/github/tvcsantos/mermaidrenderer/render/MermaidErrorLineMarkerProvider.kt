@@ -3,7 +3,6 @@ package com.github.tvcsantos.mermaidrenderer.render
 import com.github.tvcsantos.mermaidrenderer.MermaidBundle
 import com.github.tvcsantos.mermaidrenderer.html.MermaidFences
 import com.github.tvcsantos.mermaidrenderer.settings.MermaidSettings
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.icons.AllIcons
@@ -59,7 +58,7 @@ class MermaidErrorLineMarkerProvider : LineMarkerProvider {
             element.textRange,
             AllIcons.General.Warning,
             { tooltip(messages) },
-            GutterIconNavigationHandler { event, _ -> showDetails(event, messages) },
+            { event, _ -> showDetails(event, messages) },
             GutterIconRenderer.Alignment.LEFT,
             { MermaidBundle.message("diagram.failed") },
         )

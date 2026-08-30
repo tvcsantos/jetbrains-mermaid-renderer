@@ -17,6 +17,7 @@ object MermaidBlockDetector {
 
     private const val MERMAID_MARKER = "mermaid"
 
+    @Suppress("SpellCheckingInspection")
     private val KEYWORDS = listOf(
         "graph",
         "flowchart",

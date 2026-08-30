@@ -6,6 +6,7 @@ import org.junit.Test
 
 class DiagramErrorTextTest {
 
+    @Suppress("SpellCheckingInspection")
     private val realMessage = """
         Parse error on line 3:
         graph TD; A -->
