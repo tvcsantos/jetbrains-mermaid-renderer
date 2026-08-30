@@ -13,7 +13,7 @@ import org.jsoup.parser.Parser
  */
 object MermaidFences {
 
-    private val FENCE_OPEN = Regex(
+    private val MERMAID_FENCE = Regex(
         pattern = "^(`{3,}|~{3,})\\s*mermaid\\b.*$",
         option = RegexOption.IGNORE_CASE
     )
@@ -34,11 +34,11 @@ object MermaidFences {
      */
     fun candidateBodies(commentText: String): Set<String> =
         buildSet {
-            bodiesTo(commentText, onlyMermaid = false, destination = this)
-            htmlBodiesTo(commentText, destination = this)
+            collectFencedBodiesTo(commentText, opening = ANY_FENCE, destination = this)
+            collectHtmlBodiesTo(commentText, destination = this)
         }
 
-    private fun htmlBodiesTo(
+    private fun collectHtmlBodiesTo(
         commentText: String,
         destination: MutableSet<String>
     ) {
@@ -54,24 +54,39 @@ object MermaidFences {
 
     /** Normalized bodies of every Mermaid fence in [commentText]. */
     fun taggedBodies(commentText: String): Set<String> =
-        buildSet {
-            bodiesTo(commentText, onlyMermaid = true, destination = this)
-        }
+        collectFencedBodiesTo(
+            commentText,
+            opening = MERMAID_FENCE,
+            destination = mutableSetOf()
+        )
 
-    private fun bodiesTo(
+    /**
+     * Collects the body of every fence in [commentText] whose opening line
+     * matches [opening].
+     *
+     * The marker that opened a fence is remembered, so a longer fence can hold
+     * a shorter one without closing early. An unterminated fence contributes
+     * nothing.
+     *
+     * @param commentText The comment source to scan.
+     * @param opening A regex that matches the opening line of a fence, with
+     * the marker in group 1.
+     * @param destination The set to which normalized bodies are added.
+     * @return [destination] for convenience.
+     */
+    private fun collectFencedBodiesTo(
         commentText: String,
-        onlyMermaid: Boolean,
+        opening: Regex,
         destination: MutableSet<String>
-    ) {
+    ): MutableSet<String> {
         val body = StringBuilder()
         var fence: String? = null
-        val fenceRegex = if (onlyMermaid) FENCE_OPEN else ANY_FENCE
 
         for (rawLine in commentText.lineSequence()) {
             val line = undecorate(rawLine)
             val open = fence
             if (open == null) {
-                val match = fenceRegex.find(line) ?: continue
+                val match = opening.find(line) ?: continue
                 fence = match.groupValues[1]
                 body.clear()
             } else if (line.startsWith(open)) {
@@ -83,6 +98,8 @@ object MermaidFences {
                 body.appendLine(line)
             }
         }
+
+        return destination
     }
 
     /**
