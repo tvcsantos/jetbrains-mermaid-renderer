@@ -73,7 +73,7 @@ object MermaidBlockDetector {
         isTagged: (String) -> Boolean = { false },
     ): String? {
         val code = element.selectFirst("code")
-        val text = sourceOf(code ?: element)
+        val text = (code ?: element).blockText()
 
         if (text.isBlank()) return null
 
@@ -81,7 +81,7 @@ object MermaidBlockDetector {
 
         if (classes.contains(MERMAID_MARKER)) return text
 
-        if (isTagged(MermaidFences.normalize(text))) return text
+        if (isTagged(DiagramText.normalize(text))) return text
 
         val lines = text.lines()
 
@@ -111,18 +111,6 @@ object MermaidBlockDetector {
             null
         }
     }
-
-    /**
-     * Returns the element text in the form Mermaid expects.
-     *
-     * When a Mermaid fence is syntax-highlighted, the renderer may turn line
-     * breaks into `<br>` elements. `wholeText()` restores those breaks to `\n`
-     * so the detector can read the diagram source correctly.
-     *
-     * @param element The element to extract the text from.
-     */
-    private fun sourceOf(element: Element): String =
-        element.wholeText().trim('\n', '\r').trimEnd()
 
     /**
      * Returns `true` when [text] starts with a Mermaid diagram keyword.

@@ -64,7 +64,7 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
         return try {
             val settings = MermaidSettings.getInstance()
             val target = refreshTarget()
-            val tagged = taggedBodies()
+            val tagged = collectFencedBodies()
             val result = MermaidHtmlRewriter.rewrite(
                 html = source,
                 heuristics = settings.heuristicDetection,
@@ -89,7 +89,7 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
      * The ```` ```mermaid ```` fences of the comment this item renders. Read from the document
      * because syntax highlighting strips the marker before it reaches the HTML.
      */
-    private fun taggedBodies(): Set<String> = try {
+    private fun collectFencedBodies(): Set<String> = try {
         val highlighter = delegate.highlighter
         if (!highlighter.isValid) {
             emptySet()

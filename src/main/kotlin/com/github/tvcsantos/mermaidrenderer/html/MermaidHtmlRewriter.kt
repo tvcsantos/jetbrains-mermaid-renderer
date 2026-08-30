@@ -60,7 +60,7 @@ object MermaidHtmlRewriter {
                 // Left exactly as the author wrote it. A Mermaid parse error runs for paragraphs
                 // and would push the documentation off the screen, so it is reported by
                 // MermaidErrorLineMarkerProvider in the gutter and written to the log instead.
-                DiagramState.Failed -> failed += MermaidFences.normalize(source)
+                DiagramState.Failed -> failed += DiagramText.normalize(source)
 
                 // Silent by default: the block simply turns into the diagram once it is ready.
                 DiagramState.Pending -> {

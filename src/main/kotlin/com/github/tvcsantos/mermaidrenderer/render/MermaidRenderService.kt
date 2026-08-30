@@ -1,6 +1,6 @@
 package com.github.tvcsantos.mermaidrenderer.render
 
-import com.github.tvcsantos.mermaidrenderer.html.MermaidFences
+import com.github.tvcsantos.mermaidrenderer.html.DiagramText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -87,7 +87,7 @@ class MermaidRenderService : Disposable {
 
     internal fun recordFailure(request: DiagramRequest, message: String) {
         failures[request.cacheKey] = message
-        failuresBySource[MermaidFences.normalize(request.source)] = message
+        failuresBySource[DiagramText.normalize(request.source)] = message
         logger<MermaidRenderService>().warn("Mermaid could not render a diagram: $message")
     }
 

@@ -75,8 +75,8 @@ class MermaidFencesTest {
     @Test
     fun `normalization ignores indentation and blank lines`() {
         assertEquals(
-            MermaidFences.normalize("graph TD;\n    A --> B;\n"),
-            MermaidFences.normalize("  graph TD;\n\n  A --> B;"),
+            DiagramText.normalize("graph TD;\n    A --> B;\n"),
+            DiagramText.normalize("  graph TD;\n\n  A --> B;"),
         )
     }
 }

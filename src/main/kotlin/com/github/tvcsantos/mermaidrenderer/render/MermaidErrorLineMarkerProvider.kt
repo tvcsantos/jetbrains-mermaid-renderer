@@ -1,7 +1,7 @@
 package com.github.tvcsantos.mermaidrenderer.render
 
 import com.github.tvcsantos.mermaidrenderer.MermaidBundle
-import com.github.tvcsantos.mermaidrenderer.html.Fences
+import com.github.tvcsantos.mermaidrenderer.html.CodeBlocks
 import com.github.tvcsantos.mermaidrenderer.html.MermaidFences
 import com.github.tvcsantos.mermaidrenderer.settings.MermaidSettings
 import com.intellij.codeInsight.daemon.LineMarkerInfo
@@ -49,7 +49,7 @@ class MermaidErrorLineMarkerProvider : LineMarkerProvider {
         }
 
         val service = service<MermaidRenderService>()
-        val messages = Fences.candidateBodies(text)
+        val messages = CodeBlocks.candidateBodies(text)
             .mapNotNull { service.failureFor(it) }
             .distinct()
         if (messages.isEmpty()) return null
