@@ -30,6 +30,13 @@ data class RewriteResult(
  */
 object MermaidHtmlRewriter {
 
+    private data class Findings(
+        var changed: Boolean = false,
+        var matched: Int = 0,
+        var pending: Int = 0,
+        val failed: MutableSet<String> = mutableSetOf(),
+    )
+
     /**
      * Rewrites [html], replacing every Mermaid code block that has a rendered
      * image with that image.
@@ -67,58 +74,75 @@ object MermaidHtmlRewriter {
             addAll(document.select(".mermaid"))
         }
 
-        var changed = false
-        var matched = 0
-        var pending = 0
-        val failed = mutableSetOf<String>()
-        for (element in candidates) {
-            if (!element.hasParent()) continue
-
-            val source = MermaidBlockDetector.getMermaidSourceOrNull(
+        val findings = Findings()
+        candidates.forEach { element ->
+            rewriteBlock(
                 element,
                 heuristics,
-                isTagged
-            ) ?: continue
-
-            matched++
-
-            when (val state = resolve(requestFor(source))) {
-                is DiagramState.Ready -> {
-                    element.replaceWith(state.diagram.image)
-                    changed = true
-                }
-
-                // Left exactly as the author wrote it. A Mermaid parse error
-                // runs for paragraphs and would push the documentation off the
-                // screen, so it is reported by MermaidErrorLineMarkerProvider
-                // in the gutter and written to the log instead.
-                DiagramState.Failed -> {
-                    failed += DiagramText.normalize(source)
-                }
-
-                // Silent by default: the block simply turns into the diagram
-                // once it is ready.
-                DiagramState.Pending -> {
-                    pending++
-                    if (showProgress) {
-                        element.after(
-                            MermaidBundle.message(
-                                key = "diagram.pending"
-                            ).toNote()
-                        )
-                        changed = true
-                    }
-                }
-            }
+                isTagged,
+                resolve,
+                requestFor,
+                showProgress,
+                findings,
+            )
         }
 
         return RewriteResult(
-            html = if (changed) document.html() else html,
+            html = if (findings.changed) document.html() else html,
             candidates = candidates.size,
-            matched = matched,
-            failed = failed,
-            pending = pending,
+            matched = findings.matched,
+            failed = findings.failed,
+            pending = findings.pending,
         )
+    }
+
+    private fun rewriteBlock(
+        element: Element,
+        heuristics: Boolean,
+        isTagged: (String) -> Boolean,
+        resolve: (DiagramRequest) -> DiagramState,
+        requestFor: (String) -> DiagramRequest,
+        showProgress: Boolean,
+        findings: Findings,
+    ) {
+        if (!element.hasParent()) return
+
+        val source = MermaidBlockDetector.getMermaidSourceOrNull(
+            element,
+            heuristics,
+            isTagged
+        ) ?: return
+
+        findings.matched++
+
+        when (val state = resolve(requestFor(source))) {
+            is DiagramState.Ready -> {
+                element.replaceWith(state.diagram.image)
+                findings.changed = true
+            }
+
+            // Left exactly as the author wrote it. A Mermaid parse error
+            // runs for paragraphs and would push the documentation off the
+            // screen, so it is reported by MermaidErrorLineMarkerProvider
+            // in the gutter and written to the log instead.
+            DiagramState.Failed -> {
+                findings.failed += DiagramText.normalize(source)
+            }
+
+            // Silent by default: the block simply turns into the diagram
+            // once it is ready.
+            DiagramState.Pending -> {
+                findings.pending++
+                if (showProgress) {
+                    element.after(
+                        MermaidBundle.message(
+                            key = "diagram.pending"
+                        ).toNote()
+                    )
+                    findings.changed = true
+                }
+            }
+        }
     }
 
     private val CachedDiagram.image get() =
