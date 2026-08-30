@@ -31,7 +31,7 @@ class MermaidSeamCheck : ProjectActivity {
         if (provider is MermaidDocRendererProvider) return
 
         val owner = provider?.javaClass?.name ?: "none"
-        logger<MermaidSeamCheck>().warn("Mermaid Renderer does not own DocRendererProvider (owner: $owner)")
+        logger.warn("Mermaid Renderer does not own DocRendererProvider (owner: $owner)")
 
         NotificationGroupManager.getInstance()
             .getNotificationGroup(NOTIFICATION_GROUP)
@@ -45,5 +45,6 @@ class MermaidSeamCheck : ProjectActivity {
 
     private companion object {
         const val NOTIFICATION_GROUP = "Mermaid Renderer"
+        val logger = logger<MermaidSeamCheck>()
     }
 }

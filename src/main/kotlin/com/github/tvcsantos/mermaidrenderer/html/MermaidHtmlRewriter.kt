@@ -91,6 +91,8 @@ object MermaidHtmlRewriter {
                 .attr("alt", MermaidBundle.message("diagram.alt"))
         )
 
-    private fun note(text: String): Element = Element("p").appendChild(Element("i").text(text))
-
+    private fun note(text: String): Element =
+        Element("p").appendChild(
+            Element("i").text(text)
+        )
 }

@@ -31,7 +31,8 @@ object MermaidBlockDetector {
         "gantt",
         "pie",
         "gitgraph",
-        // A keyword in its own right in Mermaid's grammar, not a keyword followed by punctuation.
+        // A keyword in its own right in Mermaid's grammar,
+        // not a keyword followed by punctuation.
         "gitgraph:",
         "mindmap",
         "timeline",
@@ -99,21 +100,25 @@ object MermaidBlockDetector {
         // Nothing found so far. If heuristics are enabled
         // try to detect a Mermaid diagram from the first
         // line of the block.
-        return if (heuristics && looksLikeMermaid(first)) text else null
+        return if (heuristics && looksLikeMermaid(first)) {
+            text
+        } else {
+            null
+        }
     }
 
     /**
-     * Text of a code block as Mermaid needs to see it.
+     * Returns the text of a code block as Mermaid needs to see it.
      *
-     * When the fence language is known - the bundled Mermaid plugin gives ```` ```mermaid ```` a
-     * Language - the platform emits syntax-highlighted code whose line breaks are `<br>` elements.
+     * When the fence language is known, the bundled Mermaid plugin assigns ```` ```mermaid ```` a
+     * `Language`, and the platform emits syntax highlighted code whose line breaks are `<br>` elements.
      * jsoup's `wholeText()` turns those back into newlines, which the detector tests pin down.
      */
     private fun sourceOf(element: Element): String =
         element.wholeText().trim('\n', '\r').trimEnd()
 
     /**
-     * `true` when [text] starts with a Mermaid diagram declaration.
+     * Returns `true` when [text] starts with a Mermaid diagram declaration.
      *
      * The keyword has to *end* there - at end of line or whitespace, which is what Mermaid's own
      * lexer requires (`stateDiagram\s+`). Accepting any non-identifier character would be enough for

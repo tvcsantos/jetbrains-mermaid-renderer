@@ -23,13 +23,25 @@ class MermaidIdeDocumentationTargetProvider(project: Project) : IdeDocumentation
 
     private val delegate = IdeDocumentationTargetProviderImpl(project)
 
-    override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> =
-        delegate.documentationTargets(editor, file, offset).map(::MermaidDocumentationTarget)
+    override fun documentationTargets(
+        editor: Editor,
+        file: PsiFile,
+        offset: Int
+    ): List<DocumentationTarget> =
+        delegate.documentationTargets(
+            editor,
+            file,
+            offset
+        ).map(::MermaidDocumentationTarget)
 
     override fun documentationTargets(
         editor: Editor,
         file: PsiFile,
         lookupElement: LookupElement,
     ): List<DocumentationTarget> =
-        delegate.documentationTargets(editor, file, lookupElement).map(::MermaidDocumentationTarget)
+        delegate.documentationTargets(
+            editor,
+            file,
+            lookupElement
+        ).map(::MermaidDocumentationTarget)
 }

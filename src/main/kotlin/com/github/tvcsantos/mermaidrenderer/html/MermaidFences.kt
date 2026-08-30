@@ -13,12 +13,16 @@ import org.jsoup.parser.Parser
  */
 object MermaidFences {
 
-    private val FENCE_OPEN = Regex("^(`{3,}|~{3,})\\s*mermaid\\b.*$", RegexOption.IGNORE_CASE)
-    private val ANY_FENCE = Regex("^(`{3,}|~{3,}).*$")
+    private val FENCE_OPEN = Regex(
+        pattern = "^(`{3,}|~{3,})\\s*mermaid\\b.*$",
+        option = RegexOption.IGNORE_CASE
+    )
+
+    private val ANY_FENCE = Regex(pattern = "^(`{3,}|~{3,}).*$")
 
     private val HTML_BLOCK = Regex(
-        "<pre[^>]*class=[\"']([^\"']*)[\"'][^>]*>(.*?)</pre>",
-        setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
+        pattern = "<pre[^>]*class=[\"']([^\"']*)[\"'][^>]*>(.*?)</pre>",
+        options = setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
     )
 
     /**
@@ -26,21 +30,36 @@ object MermaidFences {
      * Used to ask which of a comment's diagrams failed, where the tag is not the deciding factor.
      */
     fun candidateBodies(commentText: String): Set<String> =
-        bodies(commentText, onlyMermaid = false) + htmlBodies(commentText)
+        buildSet {
+            bodiesTo(commentText, onlyMermaid = false, this)
+            htmlBodiesTo(commentText, this)
+        }
 
-    private fun htmlBodies(commentText: String): Set<String> {
-        val undecorated = commentText.lineSequence().joinToString("\n") { undecorate(it) }
-        return HTML_BLOCK.findAll(undecorated)
+    private fun htmlBodiesTo(
+        commentText: String,
+        destination: MutableSet<String>
+    ) {
+        val undecorated = commentText.lineSequence()
+            .joinToString("\n") {
+                undecorate(it)
+            }
+        HTML_BLOCK.findAll(undecorated)
             .map { normalize(it.groupValues[2]) }
             .filter { it.isNotEmpty() }
-            .toSet()
+            .toCollection(destination)
     }
 
     /** Normalized bodies of every Mermaid fence in [commentText]. */
-    fun taggedBodies(commentText: String): Set<String> = bodies(commentText, onlyMermaid = true)
+    fun taggedBodies(commentText: String): Set<String> =
+        buildSet {
+            bodiesTo(commentText, onlyMermaid = true, this)
+        }
 
-    private fun bodies(commentText: String, onlyMermaid: Boolean): Set<String> {
-        val bodies = mutableSetOf<String>()
+    private fun bodiesTo(
+        commentText: String,
+        onlyMermaid: Boolean,
+        destination: MutableSet<String>
+    ) {
         val body = StringBuilder()
         var fence: String? = null
 
@@ -52,14 +71,12 @@ object MermaidFences {
                 fence = match.groupValues[1]
                 body.setLength(0)
             } else if (line.startsWith(open)) {
-                normalize(body.toString()).takeIf { it.isNotEmpty() }?.let(bodies::add)
+                normalize(body.toString()).takeIf { it.isNotEmpty() }?.let(destination::add)
                 fence = null
             } else {
                 body.append(line).append('\n')
             }
         }
-
-        return bodies
     }
 
     /**
@@ -69,20 +86,35 @@ object MermaidFences {
      * entities decoded, while the comment source still reads `A --&gt;`. Both are decoded here so a
      * diagram recorded from one side can be found from the other.
      */
-    fun normalize(text: String): String = Parser.unescapeEntities(text, false)
-        .lineSequence()
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
-        .joinToString("\n")
+    fun normalize(text: String): String =
+        Parser.unescapeEntities(text, false)
+            .lineSequence()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .joinToString("\n")
 
     /** Strips doc comment decoration: the opening and closing markers, a leading star, and `///`. */
     private fun undecorate(line: String): String {
         var text = line.trim()
-        if (text.startsWith("/**")) text = text.removePrefix("/**")
-        if (text.endsWith("*/")) text = text.removeSuffix("*/")
-        text = text.trim()
-        if (text.startsWith("///")) text = text.removePrefix("///")
-        else if (text.startsWith("*")) text = text.removePrefix("*")
-        return text.trim()
+        COMMENT_MARKERS.forEach { (open, middle, close) ->
+            if (text.startsWith(open)) {
+                text = text.removePrefix(open)
+            }
+            if (close != null && text.endsWith(close)) {
+                text = text.removeSuffix(close)
+            }
+            text = text.trim()
+            if (middle != null && text.startsWith(middle)) {
+                text = text.removePrefix(middle).trimStart()
+            }
+        }
+        return text
     }
+
+    private val COMMENT_MARKERS = listOf(
+        Triple("/**", "*", "*/"),
+        Triple("/*", null, "*/"),
+        Triple("///", "///", null),
+        Triple("//", "//", null),
+    )
 }
