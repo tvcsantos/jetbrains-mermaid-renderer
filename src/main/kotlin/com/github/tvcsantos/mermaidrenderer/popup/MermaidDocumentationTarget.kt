@@ -1,3 +1,7 @@
+// Decorating documentation this plugin does not own has no public API.
+// the public Documentation interface can only set content, so reading it needs DocumentationData.
+@file:Suppress("UnstableApiUsage")
+
 package com.github.tvcsantos.mermaidrenderer.popup
 
 import com.github.tvcsantos.mermaidrenderer.html.MermaidHtmlRewriter

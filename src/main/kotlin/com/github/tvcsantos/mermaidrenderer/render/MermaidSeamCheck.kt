@@ -1,3 +1,7 @@
+// Decorating documentation this plugin does not own has no public API.
+// reads DocRendererProvider to verify the plugin still owns that seam.
+@file:Suppress("UnstableApiUsage")
+
 package com.github.tvcsantos.mermaidrenderer.render
 
 import com.github.tvcsantos.mermaidrenderer.MermaidBundle

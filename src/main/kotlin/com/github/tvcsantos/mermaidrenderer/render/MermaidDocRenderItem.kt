@@ -1,3 +1,7 @@
+// Decorating documentation this plugin does not own has no public API.
+// DocRenderItem is @Internal; wrapping it is how the comment's HTML is rewritten.
+@file:Suppress("UnstableApiUsage")
+
 package com.github.tvcsantos.mermaidrenderer.render
 
 import com.github.tvcsantos.mermaidrenderer.html.MermaidFences

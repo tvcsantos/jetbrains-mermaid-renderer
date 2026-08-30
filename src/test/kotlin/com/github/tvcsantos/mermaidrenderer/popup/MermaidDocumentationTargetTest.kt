@@ -1,3 +1,7 @@
+// Decorating documentation this plugin does not own has no public API.
+// asserts the plugin owns IdeDocumentationTargetProvider and reads DocumentationData back.
+@file:Suppress("UnstableApiUsage")
+
 package com.github.tvcsantos.mermaidrenderer.popup
 
 import com.github.tvcsantos.mermaidrenderer.render.DiagramCache

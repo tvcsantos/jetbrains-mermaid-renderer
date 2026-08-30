@@ -1,3 +1,7 @@
+// Decorating documentation this plugin does not own has no public API.
+// IdeDocumentationTargetProvider is the platform's seam for the documentation popup.
+@file:Suppress("UnstableApiUsage")
+
 package com.github.tvcsantos.mermaidrenderer.popup
 
 import com.intellij.codeInsight.lookup.LookupElement

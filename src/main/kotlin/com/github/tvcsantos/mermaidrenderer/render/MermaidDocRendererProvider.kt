@@ -1,3 +1,7 @@
+// Decorating documentation this plugin does not own has no public API.
+// DocRendererProvider is the platform's own seam for replacing the rendered-comment renderer.
+@file:Suppress("UnstableApiUsage")
+
 package com.github.tvcsantos.mermaidrenderer.render
 
 import com.intellij.codeInsight.documentation.render.DocRenderItem

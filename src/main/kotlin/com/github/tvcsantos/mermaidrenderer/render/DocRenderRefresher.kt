@@ -1,3 +1,7 @@
+// Decorating documentation this plugin does not own has no public API.
+// DocRenderItemUpdater is @Internal; it is how a rendered comment is asked to redraw.
+@file:Suppress("UnstableApiUsage")
+
 package com.github.tvcsantos.mermaidrenderer.render
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -60,7 +64,10 @@ class DocRenderRefresher(private val project: Project) : Disposable {
         ApplicationManager.getApplication().invokeLater({
             if (project.isDisposed || !file.isValid) return@invokeLater
             PsiManager.getInstance(project).findFile(file)
-                ?.let { DaemonCodeAnalyzer.getInstance(project).restart(it) }
+                ?.let {
+                    DaemonCodeAnalyzer.getInstance(project)
+                        .restart(it, "Mermaid diagram state changed")
+                }
         }, ModalityState.any(), project.disposed)
     }
 
