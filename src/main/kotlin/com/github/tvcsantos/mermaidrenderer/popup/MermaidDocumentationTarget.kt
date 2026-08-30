@@ -21,55 +21,78 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import kotlinx.coroutines.flow.map
 
 /**
- * The quick documentation popup and tool window, decorated the same way as a rendered comment.
+ * The quick documentation popup and tool window, decorated the same way as a
+ * rendered comment.
  *
- * Everything is delegated except the documentation HTML, which has its Mermaid blocks replaced by
- * images. Wrapping happens in [MermaidIdeDocumentationTargetProvider]; the pointer wraps too, so a
- * target that survives a read action comes back decorated.
+ * Everything is delegated except the documentation HTML, which has its Mermaid
+ * blocks replaced by images. Wrapping happens both on
+ * [MermaidIdeDocumentationTargetProvider] and on the
+ * [DocumentationTarget.createPointer] returned by this class.
+ *
+ * The pointer wraps too, so a target that survives a read action comes back
+ * decorated.
  */
-class MermaidDocumentationTarget(private val delegate: DocumentationTarget) : DocumentationTarget {
+class MermaidDocumentationTarget(
+    private val delegate: DocumentationTarget
+) : DocumentationTarget {
+
+    private val logger = logger<MermaidDocumentationTarget>()
 
     override fun createPointer(): Pointer<out DocumentationTarget> {
         val delegatePointer = delegate.createPointer()
-        return Pointer { delegatePointer.dereference()?.let(::MermaidDocumentationTarget) }
+        return Pointer {
+            delegatePointer.dereference()
+                ?.let(::MermaidDocumentationTarget)
+        }
     }
 
-    override fun computePresentation(): TargetPresentation = delegate.computePresentation()
+    override fun computePresentation(): TargetPresentation =
+        delegate.computePresentation()
 
-    override fun computeDocumentationHint(): String? = delegate.computeDocumentationHint()
+    override fun computeDocumentationHint(): String? =
+        delegate.computeDocumentationHint()
 
     override fun computeDocumentation(): DocumentationResult? =
         delegate.computeDocumentation()?.let(::rewrite)
 
-    private fun rewrite(result: DocumentationResult): DocumentationResult = when (result) {
-        is DocumentationData -> rewrite(result)
-        // Computed later, off the calling thread; the decoration has to travel with the supplier.
-        is AsyncDocumentation -> AsyncDocumentation {
-            when (val documentation = result.supplier.invoke()) {
-                is DocumentationData -> rewrite(documentation)
-                else -> documentation
+    private fun rewrite(result: DocumentationResult): DocumentationResult =
+        when (result) {
+            is DocumentationData -> rewrite(result)
+            // Computed later, off the calling thread.
+            // The decoration has to travel with the supplier.
+            is AsyncDocumentation -> AsyncDocumentation {
+                when (val documentation = result.supplier.invoke()) {
+                    is DocumentationData -> rewrite(documentation)
+                    else -> documentation
+                }
             }
         }
-    }
 
-    private fun rewrite(documentation: DocumentationData): DocumentationData = try {
-        val original = documentation.html
-        val rewritten = rewrite(original)
-        val decorated = documentation.html(rewritten.html) as DocumentationData
+    private fun rewrite(documentation: DocumentationData): DocumentationData =
+        try {
+            val original = documentation.html
+            val rewritten = rewrite(original)
+            val decorated = documentation.html(rewritten.html) as DocumentationData
 
-        if (rewritten.pending == 0) {
-            decorated
-        } else {
-            // Rendering finishes after the popup is on screen, so its content is replaced as the
-            // diagrams arrive. The platform cancels the flow when the popup closes.
-            val updates = DiagramUpdates.htmlUpdates(rewritten.html) { rewrite(original) }
-                .map { DocumentationContent.content(it) }
-            decorated.updates(updates) as DocumentationData
+            if (rewritten.pending == 0) {
+                decorated
+            } else {
+                // Rendering finishes after the popup is on screen
+                // so its content is replaced as the diagrams arrive.
+                // The platform cancels the flow when the popup closes.
+                val updates = DiagramUpdates.htmlUpdates(
+                    initialHtml = rewritten.html
+                ) {
+                    rewrite(original)
+                }.map {
+                    DocumentationContent.content(it)
+                }
+                decorated.updates(updates) as DocumentationData
+            }
+        } catch (e: Exception) {
+            logger.warn("Cannot rewrite documentation", e)
+            documentation
         }
-    } catch (e: Exception) {
-        logger<MermaidDocumentationTarget>().warn("Cannot rewrite documentation", e)
-        documentation
-    }
 
     private fun rewrite(html: String): RewriteResult {
         val settings = MermaidSettings.getInstance()

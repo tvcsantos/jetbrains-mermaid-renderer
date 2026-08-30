@@ -55,12 +55,17 @@ object MermaidBlockDetector {
     )
 
     /**
-     * Mermaid source of [element], or `null` when it is an ordinary code
-     * block.
+     * Returns the Mermaid source of [element], or `null` when it is an
+     * ordinary code block.
      *
-     * [isTagged] is asked whether a block's body was fenced as
-     * ```` ```mermaid ```` in the comment source - the only reliable marker
-     * once syntax highlighting has consumed the info string.
+     * @param element The `<pre>` or `<code>` element to inspect.
+     * @param heuristics When `true`, try to detect a Mermaid diagram from
+     * the first line of the block, even when it is not tagged.
+     * @param isTagged A predicate that returns `true` when a block's body was
+     * fenced as `mermaid`.
+     *
+     * @return The Mermaid source, or `null` when [element] is not a Mermaid
+     * block.
      */
     fun mermaidSource(
         element: Element,
