@@ -1,5 +1,5 @@
 // Decorating documentation this plugin does not own has no public API.
-// asserts the plugin owns DocRendererProvider.
+// Asserts the plugin owns DocRendererProvider.
 @file:Suppress("UnstableApiUsage")
 
 package com.github.tvcsantos.mermaidrenderer.render

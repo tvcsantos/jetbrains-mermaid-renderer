@@ -1,5 +1,6 @@
 // Decorating documentation this plugin does not own has no public API.
-// DocRenderItemUpdater is @Internal; it is how a rendered comment is asked to redraw.
+// DocRenderItemUpdater is @Internal; it is how a rendered comment is asked to
+// redraw.
 @file:Suppress("UnstableApiUsage")
 
 package com.github.tvcsantos.mermaidrenderer.render

@@ -1,5 +1,6 @@
 // Decorating documentation this plugin does not own has no public API.
-// the public Documentation interface can only set content, so reading it needs DocumentationData.
+// The public Documentation interface can only set content, so reading it needs
+// DocumentationData.
 @file:Suppress("UnstableApiUsage")
 
 package com.github.tvcsantos.mermaidrenderer.popup
@@ -99,7 +100,8 @@ class MermaidDocumentationTarget(
             html = html,
             heuristics = settings.heuristicDetection,
             requestFor = { DiagramRequest.of(it, settings) },
-            // No editor to refresh from a popup; the updates flow above carries the diagram instead.
+            // No editor to refresh from a popup;
+            // the updates flow above carries the diagram instead.
             resolve = { service.resolve(it, null) },
             showProgress = settings.showRenderingProgress,
         )
