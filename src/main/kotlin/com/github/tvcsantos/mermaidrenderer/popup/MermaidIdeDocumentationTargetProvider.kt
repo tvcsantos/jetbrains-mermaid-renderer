@@ -11,15 +11,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.psi.PsiFile
+import com.intellij.codeInsight.documentation.render.DocRendererProvider
 
 /**
- * The single point the IDE asks for the documentation shown on hover, in the quick documentation
- * popup and in the documentation tool window - the popup's equivalent of `DocRendererProvider`.
+ * The single point the IDE asks for the documentation shown on hover, in the
+ * quick documentation popup and in the documentation tool window, as the
+ * popup's equivalent of [DocRendererProvider].
  *
- * The platform marks this service `open="true"`, so replacing it and wrapping the targets decorates
- * every one of those surfaces without competing with the providers that own the documentation.
+ * The platform marks this service `open="true"`, so replacing it and wrapping
+ * the targets decorates every one of those surfaces without competing with
+ * the providers that own the documentation.
  */
-class MermaidIdeDocumentationTargetProvider(project: Project) : IdeDocumentationTargetProvider {
+class MermaidIdeDocumentationTargetProvider(
+    project: Project
+) : IdeDocumentationTargetProvider {
 
     private val delegate = IdeDocumentationTargetProviderImpl(project)
 

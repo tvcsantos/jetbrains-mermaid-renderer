@@ -36,8 +36,6 @@ class MermaidDocumentationTarget(
     private val delegate: DocumentationTarget
 ) : DocumentationTarget {
 
-    private val logger = logger<MermaidDocumentationTarget>()
-
     override fun createPointer(): Pointer<out DocumentationTarget> {
         val delegatePointer = delegate.createPointer()
         return Pointer {
@@ -105,5 +103,9 @@ class MermaidDocumentationTarget(
             resolve = { service.resolve(it, null) },
             showProgress = settings.showRenderingProgress,
         )
+    }
+
+    private companion object {
+        val logger = logger<MermaidDocumentationTarget>()
     }
 }

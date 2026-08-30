@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.time.Duration.Companion.milliseconds
 
 class DiagramUpdatesTest {
 
@@ -15,7 +16,7 @@ class DiagramUpdatesTest {
     @Test
     fun `emits the documentation once the diagram is ready, then completes`() = runBlocking {
         var polls = 0
-        val updates = DiagramUpdates.htmlUpdates(pendingResult.html, pollIntervalMs = 1, budgetMs = 1_000) {
+        val updates = DiagramUpdates.htmlUpdates(pendingResult.html, pollIntervalMs = 1.milliseconds, budgetMs = 1_000.milliseconds) {
             polls++
             if (polls < 3) pendingResult else readyResult
         }
@@ -25,7 +26,7 @@ class DiagramUpdatesTest {
 
     @Test
     fun `says nothing while the documentation has not changed`() = runBlocking {
-        val updates = DiagramUpdates.htmlUpdates(pendingResult.html, pollIntervalMs = 1, budgetMs = 20) {
+        val updates = DiagramUpdates.htmlUpdates(pendingResult.html, pollIntervalMs = 1.milliseconds, budgetMs = 20.milliseconds) {
             pendingResult
         }
 
@@ -35,7 +36,7 @@ class DiagramUpdatesTest {
     @Test
     fun `gives up when the diagram never arrives`() = runBlocking {
         var polls = 0
-        val updates = DiagramUpdates.htmlUpdates(pendingResult.html, pollIntervalMs = 1, budgetMs = 20) {
+        val updates = DiagramUpdates.htmlUpdates(pendingResult.html, pollIntervalMs = 1.milliseconds, budgetMs = 20.milliseconds) {
             polls++
             pendingResult
         }
@@ -50,7 +51,7 @@ class DiagramUpdatesTest {
         var polls = 0
         val failed = RewriteResult("<p>code block</p>", candidates = 1, matched = 1, failed = setOf("graph TD;"))
 
-        DiagramUpdates.htmlUpdates(pendingResult.html, pollIntervalMs = 1, budgetMs = 1_000) {
+        DiagramUpdates.htmlUpdates(pendingResult.html, pollIntervalMs = 1.milliseconds, budgetMs = 1_000.milliseconds) {
             polls++
             failed
         }.toList()

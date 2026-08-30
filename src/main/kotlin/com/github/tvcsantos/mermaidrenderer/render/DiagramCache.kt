@@ -26,8 +26,6 @@ data class CachedDiagram(val path: Path, val width: Int, val height: Int) {
 @Service(Service.Level.APP)
 class DiagramCache {
 
-    private val log = logger<DiagramCache>()
-    private val root: Path = Path.of(PathManager.getSystemPath(), "mermaid-renderer", "cache")
     private val index = ConcurrentHashMap<String, CachedDiagram>()
     private val scanned = AtomicBoolean(false)
 
@@ -49,7 +47,7 @@ class DiagramCache {
             Files.write(file, png)
             CachedDiagram(file, width, height).also { index[key] = it }
         } catch (e: Exception) {
-            log.warn("Cannot store a rendered diagram", e)
+            logger.warn("Cannot store a rendered diagram", e)
             null
         }
     }
@@ -60,7 +58,9 @@ class DiagramCache {
             if (Files.isDirectory(root)) {
                 Files.list(root).use { files -> files.forEach { it.deleteIfExists() } }
             }
-        }.onFailure { log.warn("Cannot clear the diagram cache", it) }
+        }.onFailure {
+            logger.warn("Cannot clear the diagram cache", it)
+        }
     }
 
     private fun ensureScanned() {
@@ -71,7 +71,9 @@ class DiagramCache {
                 files.forEach { path -> parse(path)?.let { (key, diagram) -> index[key] = diagram } }
             }
             prune()
-        }.onFailure { log.warn("Cannot read the diagram cache", it) }
+        }.onFailure {
+            logger.warn("Cannot read the diagram cache", it)
+        }
     }
 
     /** File names look like `<sha256>-<width>x<height>.png`. */
@@ -99,5 +101,15 @@ class DiagramCache {
             path.deleteIfExists()
             index.entries.removeIf { it.value.path == path }
         }
+    }
+
+    private companion object {
+        private val logger = logger<DiagramCache>()
+
+        private val root: Path = Path.of(
+            PathManager.getSystemPath(),
+            "mermaid-renderer",
+            "cache"
+        )
     }
 }

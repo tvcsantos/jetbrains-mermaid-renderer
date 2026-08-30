@@ -49,7 +49,7 @@ object MermaidHtmlRewriter {
         val failed = mutableSetOf<String>()
         for (element in candidates) {
             if (!element.hasParent()) continue
-            val source = MermaidBlockDetector.mermaidSource(element, heuristics, isTagged) ?: continue
+            val source = MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics, isTagged) ?: continue
             matched++
             when (val state = resolve(requestFor(source))) {
                 is DiagramState.Ready -> {

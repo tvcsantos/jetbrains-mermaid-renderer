@@ -95,7 +95,7 @@ class RenderedDocumentationTest : BasePlatformTestCase() {
         // Highlighting replaces the ```mermaid info string, so the language-mermaid class is gone
         // and a tagged fence is recognized by the keyword heuristic like an untagged one.
         val source = Jsoup.parse(html).select("pre")
-            .firstNotNullOfOrNull { MermaidBlockDetector.mermaidSource(it, heuristics = true) }
+            .firstNotNullOfOrNull { MermaidBlockDetector.getMermaidSourceOrNull(it, heuristics = true) }
 
         assertNotNull("The diagram was not detected in: $html", source)
         assertTrue("Line breaks were lost: $source", source!!.lines().size >= 3)
@@ -121,12 +121,12 @@ class RenderedDocumentationTest : BasePlatformTestCase() {
 
         assertNull(
             "Nothing should be detected from the HTML alone: $html",
-            blocks.firstNotNullOfOrNull { MermaidBlockDetector.mermaidSource(it, heuristics = false) },
+            blocks.firstNotNullOfOrNull { MermaidBlockDetector.getMermaidSourceOrNull(it, heuristics = false) },
         )
 
         val tagged = MermaidFences.taggedBodies(text)
         val source = blocks.firstNotNullOfOrNull {
-            MermaidBlockDetector.mermaidSource(it, heuristics = false, isTagged = tagged::contains)
+            MermaidBlockDetector.getMermaidSourceOrNull(it, heuristics = false, isTagged = tagged::contains)
         }
 
         assertNotNull("The fence from the comment source was not matched: $html", source)
@@ -147,7 +147,7 @@ class RenderedDocumentationTest : BasePlatformTestCase() {
             """.trimIndent(),
         )
         val source = Jsoup.parse(html).select("pre")
-            .firstNotNullOfOrNull { MermaidBlockDetector.mermaidSource(it, heuristics = true) }
+            .firstNotNullOfOrNull { MermaidBlockDetector.getMermaidSourceOrNull(it, heuristics = true) }
         assertNotNull("The diagram was not detected in: $html", source)
 
         val request = DiagramRequest.of(source!!)

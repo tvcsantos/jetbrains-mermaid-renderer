@@ -58,7 +58,7 @@ object MermaidBlockDetector {
      * Returns the Mermaid source of [element], or `null` when it is an
      * ordinary code block.
      *
-     * @param element The `<pre>` or `<code>` element to inspect.
+     * @param element The element to inspect.
      * @param heuristics When `true`, try to detect a Mermaid diagram from
      * the first line of the block, even when it is not tagged.
      * @param isTagged A predicate that returns `true` when a block's body was
@@ -67,7 +67,7 @@ object MermaidBlockDetector {
      * @return The Mermaid source, or `null` when [element] is not a Mermaid
      * block.
      */
-    fun mermaidSource(
+    fun getMermaidSourceOrNull(
         element: Element,
         heuristics: Boolean,
         isTagged: (String) -> Boolean = { false },
@@ -113,24 +113,26 @@ object MermaidBlockDetector {
     }
 
     /**
-     * Returns the text of a code block as Mermaid needs to see it.
+     * Returns the element text in the form Mermaid expects.
      *
-     * When the fence language is known, the bundled Mermaid plugin assigns ```` ```mermaid ```` a
-     * `Language`, and the platform emits syntax highlighted code whose line breaks are `<br>` elements.
-     * jsoup's `wholeText()` turns those back into newlines, which the detector tests pin down.
+     * When a Mermaid fence is syntax-highlighted, the renderer may turn line
+     * breaks into `<br>` elements. `wholeText()` restores those breaks to `\n`
+     * so the detector can read the diagram source correctly.
+     *
+     * @param element The element to extract the text from.
      */
     private fun sourceOf(element: Element): String =
         element.wholeText().trim('\n', '\r').trimEnd()
 
     /**
-     * Returns `true` when [text] starts with a Mermaid diagram declaration.
+     * Returns `true` when [text] starts with a Mermaid diagram keyword.
      *
-     * The keyword has to *end* there - at end of line or whitespace, which is what Mermaid's own
-     * lexer requires (`stateDiagram\s+`). Accepting any non-identifier character would be enough for
-     * `graph TD`, but it also swallows ordinary code and configuration: `graph.addNode(x)`,
-     * `pie.slice(3)` and a YAML `graph: mygraph` would all be sent to Mermaid and reported as broken
-     * diagrams. Forms that genuinely carry punctuation - `stateDiagram-v2`, `gitGraph:` - are
-     * keywords of their own, so they match while an invented `stateDiagram-v3` does not.
+     * The keyword must be followed by whitespace or end of line. This avoids
+     * matching regular code such as `graph.addNode(x)` or `pie.slice(3)`.
+     * Punctuated Mermaid forms like `stateDiagram-v2` and `gitGraph:` are
+     * handled as explicit keywords.
+     *
+     * @param text The string to check for Mermaid diagram keywords.
      */
     fun looksLikeMermaid(text: String): Boolean {
         val head = text.trimStart().lowercase()

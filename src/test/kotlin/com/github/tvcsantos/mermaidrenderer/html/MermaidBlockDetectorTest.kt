@@ -14,28 +14,28 @@ class MermaidBlockDetectorTest {
     @Test
     fun `detects a language-mermaid fence`() {
         val element = firstBlock("<pre><code class=\"language-mermaid\">graph TD;\n  A--&gt;B;</code></pre>")
-        assertEquals("graph TD;\n  A-->B;", MermaidBlockDetector.mermaidSource(element, heuristics = false))
+        assertEquals("graph TD;\n  A-->B;", MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics = false))
     }
 
     @Test
     fun `detects a pre with a mermaid class`() {
         val element = firstBlock("<pre class=\"mermaid\">sequenceDiagram\n  A->>B: hi</pre>")
-        assertEquals("sequenceDiagram\n  A->>B: hi", MermaidBlockDetector.mermaidSource(element, heuristics = false))
+        assertEquals("sequenceDiagram\n  A->>B: hi", MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics = false))
     }
 
     @Test
     fun `strips a leading mermaid info line`() {
         val element = firstBlock("<pre><code>mermaid\nflowchart LR\n  A --&gt; B</code></pre>")
-        assertEquals("flowchart LR\n  A --> B", MermaidBlockDetector.mermaidSource(element, heuristics = false))
+        assertEquals("flowchart LR\n  A --> B", MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics = false))
     }
 
     @Test
     fun `heuristics pick up an untagged diagram`() {
         val element = firstBlock("<pre><code>stateDiagram-v2\n  [*] --&gt; Idle</code></pre>")
-        assertNull(MermaidBlockDetector.mermaidSource(element, heuristics = false))
+        assertNull(MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics = false))
         assertEquals(
             "stateDiagram-v2\n  [*] --> Idle",
-            MermaidBlockDetector.mermaidSource(element, heuristics = true),
+            MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics = true),
         )
     }
 
@@ -44,17 +44,17 @@ class MermaidBlockDetectorTest {
         val element = firstBlock(
             "<pre><code><span>graph TD;<br></span><span>  A --&gt; B;</span></code></pre>"
         )
-        assertEquals("graph TD;\n  A --> B;", MermaidBlockDetector.mermaidSource(element, heuristics = true))
+        assertEquals("graph TD;\n  A --> B;", MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics = true))
     }
 
     @Test
     fun `a body tagged in the comment source is detected without heuristics`() {
         val element = firstBlock("<pre><code><span>graph TD;<br></span><span>  A --&gt; B;</span></code></pre>")
 
-        assertNull(MermaidBlockDetector.mermaidSource(element, heuristics = false))
+        assertNull(MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics = false))
         assertEquals(
             "graph TD;\n  A --> B;",
-            MermaidBlockDetector.mermaidSource(
+            MermaidBlockDetector.getMermaidSourceOrNull(
                 element,
                 heuristics = false,
                 isTagged = setOf("graph TD;\nA --> B;")::contains,
@@ -65,7 +65,7 @@ class MermaidBlockDetectorTest {
     @Test
     fun `leaves ordinary code alone`() {
         val element = firstBlock("<pre><code>val graphics = 1</code></pre>")
-        assertNull(MermaidBlockDetector.mermaidSource(element, heuristics = true))
+        assertNull(MermaidBlockDetector.getMermaidSourceOrNull(element, heuristics = true))
     }
 
     @Test

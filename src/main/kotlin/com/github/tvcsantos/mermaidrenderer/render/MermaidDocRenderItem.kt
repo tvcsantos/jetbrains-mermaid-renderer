@@ -80,7 +80,7 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
             }
             result
         } catch (e: Exception) {
-            logger<MermaidDocRenderItem>().warn("Cannot rewrite rendered documentation", e)
+            logger.warn("Cannot rewrite rendered documentation", e)
             RewriteResult(source, candidates = 0, matched = 0)
         }
     }
@@ -100,7 +100,7 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
             MermaidFences.taggedBodies(document.getText(TextRange(start, end)))
         }
     } catch (e: Exception) {
-        logger<MermaidDocRenderItem>().warn("Cannot read the comment source", e)
+        logger.warn("Cannot read the comment source", e)
         emptySet()
     }
 
@@ -117,7 +117,7 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
      */
     private fun reportOnce(result: RewriteResult) {
         if (!reported.compareAndSet(false, true)) return
-        logger<MermaidDocRenderItem>().info(
+        logger.info(
             "Rewrote a rendered comment: ${result.candidates} code block(s), " +
                 "${result.matched} recognised as mermaid"
         )
@@ -145,6 +145,8 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
     override fun getInlineDocumentationTarget(): DocumentationTarget? = delegate.getInlineDocumentationTarget()
 
     private companion object {
+        /** Static: one of these items exists per rendered comment. */
+        val logger = logger<MermaidDocRenderItem>()
         val reported = AtomicBoolean(false)
     }
 }
