@@ -4,6 +4,7 @@ import com.github.tvcsantos.mermaidrenderer.html.RewriteResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Documentation that keeps up with the diagrams still being rendered.
@@ -28,7 +29,7 @@ internal object DiagramUpdates {
         var waited = 0L
 
         while (waited < budgetMs) {
-            delay(pollIntervalMs)
+            delay(pollIntervalMs.milliseconds)
             waited += pollIntervalMs
 
             val result = rewrite()

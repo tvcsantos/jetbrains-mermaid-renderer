@@ -14,5 +14,6 @@ import com.intellij.codeInsight.documentation.render.DocRendererProvider
  */
 class MermaidDocRendererProvider : DocRendererProvider {
 
-    override fun provideDocRenderer(item: DocRenderItem): DocRenderer = DocRenderer(MermaidDocRenderItem(item))
+    override fun provideDocRenderer(item: DocRenderItem): DocRenderer =
+        DocRenderer(MermaidDocRenderItem(item))
 }

@@ -60,9 +60,12 @@ class MermaidConfigurable : BoundConfigurable(MermaidBundle.message("settings.ti
         super.apply()
         // Theme, width and scale are part of the cache key, so previous failures deserve a retry.
         service<MermaidRenderService>().forgetFailures()
-        // Showing or hiding the marker only takes effect once the files are analysed again.
+        // Showing or hiding the marker only takes effect once the files are analyzed again.
         ProjectManager.getInstance().openProjects
             .filterNot { it.isDisposed }
-            .forEach { DaemonCodeAnalyzer.getInstance(it).restart() }
+            .forEach {
+                DaemonCodeAnalyzer.getInstance(it)
+                    .restart("Mermaid settings changed")
+            }
     }
 }

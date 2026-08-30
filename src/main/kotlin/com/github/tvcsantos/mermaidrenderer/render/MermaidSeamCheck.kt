@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import java.util.concurrent.atomic.AtomicBoolean
 
+private val checked = AtomicBoolean(false)
+
 /**
  * Verifies that the plugin actually owns the rendering seam.
  *
@@ -39,6 +41,5 @@ class MermaidSeamCheck : ProjectActivity {
 
     private companion object {
         const val NOTIFICATION_GROUP = "Mermaid Renderer"
-        val checked = AtomicBoolean(false)
     }
 }
