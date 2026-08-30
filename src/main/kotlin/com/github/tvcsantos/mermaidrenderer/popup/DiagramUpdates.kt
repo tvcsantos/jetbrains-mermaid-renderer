@@ -8,20 +8,30 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Documentation that keeps up with the diagrams still being rendered.
- *
- * A popup is computed once and shown; unlike a rendered comment there is no
- * inlay to refresh when a diagram arrives a moment later. The platform's
- * answer is an updates flow whose emissions replace the browser content, so
- * this polls the rewrite until nothing is pending and emits whenever the
- * documentation actually changed. Collection is canceled by the platform when
- * the popup closes.
+ * Helpers for documentation updates, including a flow that emits the
+ * documentation again as pending diagrams finish rendering.
  */
 internal object DiagramUpdates {
 
     private val POLL_INTERVAL_MS = 250L.milliseconds
     private val BUDGET_MS = 30_000L.milliseconds
 
+    /**
+     * Emits [initialHtml] rewritten, each time a pending diagram changes it.
+     *
+     * A popup is computed once and shown, so unlike a rendered comment there
+     * is no inlay to refresh when a diagram arrives a moment later; the
+     * platform replaces the content from this flow instead, and cancels
+     * collection when the popup closes. The rewrite is polled until nothing is
+     * pending, either because every diagram rendered or because the rest
+     * failed, and identical documentation is never emitted twice.
+     *
+     * @param initialHtml The documentation already on screen.
+     * @param pollIntervalMs How long to wait between rewrites.
+     * @param budgetMs How long to keep polling before giving up.
+     * @param rewrite Produces the documentation as it stands now.
+     * @return A flow of documentation to replace what is shown.
+     */
     fun htmlUpdates(
         initialHtml: String,
         pollIntervalMs: Duration = POLL_INTERVAL_MS,
