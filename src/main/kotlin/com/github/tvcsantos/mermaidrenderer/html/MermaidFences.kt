@@ -26,13 +26,16 @@ object MermaidFences {
     )
 
     /**
-     * Every block in [commentText] that could be a diagram: any fence, plus HTML `<pre>` blocks.
-     * Used to ask which of a comment's diagrams failed, where the tag is not the deciding factor.
+     * Every block in [commentText] that could be a diagram: any fence, plus
+     * HTML `<pre>` blocks.
+     *
+     * Used to ask which of a comment's diagrams failed, where the tag is not
+     * the deciding factor.
      */
     fun candidateBodies(commentText: String): Set<String> =
         buildSet {
-            bodiesTo(commentText, onlyMermaid = false, this)
-            htmlBodiesTo(commentText, this)
+            bodiesTo(commentText, onlyMermaid = false, destination = this)
+            htmlBodiesTo(commentText, destination = this)
         }
 
     private fun htmlBodiesTo(
@@ -52,7 +55,7 @@ object MermaidFences {
     /** Normalized bodies of every Mermaid fence in [commentText]. */
     fun taggedBodies(commentText: String): Set<String> =
         buildSet {
-            bodiesTo(commentText, onlyMermaid = true, this)
+            bodiesTo(commentText, onlyMermaid = true, destination = this)
         }
 
     private fun bodiesTo(
@@ -62,19 +65,22 @@ object MermaidFences {
     ) {
         val body = StringBuilder()
         var fence: String? = null
+        val fenceRegex = if (onlyMermaid) FENCE_OPEN else ANY_FENCE
 
         for (rawLine in commentText.lineSequence()) {
             val line = undecorate(rawLine)
             val open = fence
             if (open == null) {
-                val match = (if (onlyMermaid) FENCE_OPEN else ANY_FENCE).find(line) ?: continue
+                val match = fenceRegex.find(line) ?: continue
                 fence = match.groupValues[1]
-                body.setLength(0)
+                body.clear()
             } else if (line.startsWith(open)) {
-                normalize(body.toString()).takeIf { it.isNotEmpty() }?.let(destination::add)
+                normalize(body.toString()).takeIf {
+                    it.isNotEmpty()
+                }?.let(destination::add)
                 fence = null
             } else {
-                body.append(line).append('\n')
+                body.appendLine(line)
             }
         }
     }
