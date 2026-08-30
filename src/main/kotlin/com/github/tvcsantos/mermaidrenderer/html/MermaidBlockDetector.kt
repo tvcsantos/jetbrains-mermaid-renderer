@@ -20,14 +20,18 @@ object MermaidBlockDetector {
     private val KEYWORDS = listOf(
         "graph",
         "flowchart",
+        "flowchart-elk",
         "sequencediagram",
         "classdiagram",
         "statediagram",
+        "statediagram-v2",
         "erdiagram",
         "journey",
         "gantt",
         "pie",
         "gitgraph",
+        // A keyword in its own right in Mermaid's grammar, not a keyword followed by punctuation.
+        "gitgraph:",
         "mindmap",
         "timeline",
         "quadrantchart",
@@ -35,6 +39,8 @@ object MermaidBlockDetector {
         "c4context",
         "c4container",
         "c4component",
+        "c4dynamic",
+        "c4deployment",
         "sankey-beta",
         "xychart-beta",
         "block-beta",
@@ -105,12 +111,23 @@ object MermaidBlockDetector {
     private fun sourceOf(element: Element): String =
         element.wholeText().trim('\n', '\r').trimEnd()
 
-    /** `true` when [text] starts with a Mermaid diagram declaration. */
+    /**
+     * `true` when [text] starts with a Mermaid diagram declaration.
+     *
+     * The keyword has to *end* there - at end of line or whitespace, which is what Mermaid's own
+     * lexer requires (`stateDiagram\s+`). Accepting any non-identifier character would be enough for
+     * `graph TD`, but it also swallows ordinary code and configuration: `graph.addNode(x)`,
+     * `pie.slice(3)` and a YAML `graph: mygraph` would all be sent to Mermaid and reported as broken
+     * diagrams. Forms that genuinely carry punctuation - `stateDiagram-v2`, `gitGraph:` - are
+     * keywords of their own, so they match while an invented `stateDiagram-v3` does not.
+     */
     fun looksLikeMermaid(text: String): Boolean {
         val head = text.trimStart().lowercase()
         return KEYWORDS.any { keyword ->
             head.startsWith(keyword) &&
-                head.getOrNull(keyword.length)?.let { !it.isLetterOrDigit() && it != '_' } ?: true
+                    head.getOrNull(keyword.length).let {
+                        it == null || it.isWhitespace()
+                    }
         }
     }
 }

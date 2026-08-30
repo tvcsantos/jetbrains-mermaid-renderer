@@ -69,10 +69,34 @@ class MermaidBlockDetectorTest {
     }
 
     @Test
-    fun `keyword match requires a word boundary`() {
+    fun `the keyword has to end where the declaration ends`() {
         assertTrue(MermaidBlockDetector.looksLikeMermaid("graph TD"))
         assertTrue(MermaidBlockDetector.looksLikeMermaid("gantt"))
-        assertFalse(MermaidBlockDetector.looksLikeMermaid("graphics.draw()"))
+        assertTrue("a keyword of its own in Mermaid's grammar", MermaidBlockDetector.looksLikeMermaid("gitGraph:"))
+        assertTrue("a known variant", MermaidBlockDetector.looksLikeMermaid("stateDiagram-v2"))
+        assertTrue(MermaidBlockDetector.looksLikeMermaid("flowchart-elk LR"))
+
+        assertFalse("an identifier that merely starts with one", MermaidBlockDetector.looksLikeMermaid("graphics.draw()"))
         assertFalse(MermaidBlockDetector.looksLikeMermaid("pieChartBuilder()"))
+    }
+
+    @Test
+    fun `ordinary code that starts with a keyword is not a diagram`() {
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("graph.addNode(x)"))
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("pie.slice(3)"))
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("timeline.push(event)"))
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("gantt->render()"))
+    }
+
+    @Test
+    fun `an invented variant is not guessed to be a diagram`() {
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("stateDiagram-v3"))
+    }
+
+    @Test
+    fun `configuration that starts with a keyword is not a diagram`() {
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("graph: mygraph"))
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("timeline: 2026"))
+        assertFalse(MermaidBlockDetector.looksLikeMermaid("pie: 3"))
     }
 }
