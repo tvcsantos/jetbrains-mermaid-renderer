@@ -124,7 +124,7 @@ class RenderedDocumentationTest : BasePlatformTestCase() {
             blocks.firstNotNullOfOrNull { MermaidBlockDetector.getMermaidSourceOrNull(it, heuristics = false) },
         )
 
-        val tagged = MermaidFences.taggedBodies(text)
+        val tagged = MermaidFences.collectFencedBodies(text)
         val source = blocks.firstNotNullOfOrNull {
             MermaidBlockDetector.getMermaidSourceOrNull(it, heuristics = false, isTagged = tagged::contains)
         }

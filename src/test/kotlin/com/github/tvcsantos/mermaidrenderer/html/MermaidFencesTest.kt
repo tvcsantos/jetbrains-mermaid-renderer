@@ -8,7 +8,7 @@ class MermaidFencesTest {
 
     @Test
     fun `reads a fence out of a kdoc comment`() {
-        val bodies = MermaidFences.taggedBodies(
+        val bodies = MermaidFences.collectFencedBodies(
             """
             /**
              * Order lifecycle.
@@ -26,7 +26,7 @@ class MermaidFencesTest {
 
     @Test
     fun `reads a fence out of a markdown javadoc comment`() {
-        val bodies = MermaidFences.taggedBodies(
+        val bodies = MermaidFences.collectFencedBodies(
             """
             /// ```mermaid
             /// flowchart LR
@@ -40,7 +40,7 @@ class MermaidFencesTest {
 
     @Test
     fun `ignores fences of other languages`() {
-        val bodies = MermaidFences.taggedBodies(
+        val bodies = MermaidFences.collectFencedBodies(
             """
             /**
              * ```kotlin
@@ -55,7 +55,7 @@ class MermaidFencesTest {
 
     @Test
     fun `handles tildes, longer fences and an info suffix`() {
-        val bodies = MermaidFences.taggedBodies(
+        val bodies = MermaidFences.collectFencedBodies(
             """
             /**
              * ~~~mermaid

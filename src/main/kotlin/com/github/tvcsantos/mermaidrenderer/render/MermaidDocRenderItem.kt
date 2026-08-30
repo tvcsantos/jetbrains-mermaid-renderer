@@ -97,7 +97,7 @@ class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem 
             val document = delegate.editor.document
             val end = highlighter.endOffset.coerceAtMost(document.textLength)
             val start = highlighter.startOffset.coerceAtMost(end)
-            MermaidFences.taggedBodies(document.getText(TextRange(start, end)))
+            MermaidFences.collectFencedBodies(document.getText(TextRange(start, end)))
         }
     } catch (e: Exception) {
         logger.warn("Cannot read the comment source", e)
