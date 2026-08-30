@@ -5,11 +5,17 @@ import org.jsoup.nodes.Element
 /**
  * Decides whether a rendered code block holds a Mermaid diagram.
  *
- * Doc comment renderers differ in what survives into the HTML: KDoc keeps the fence info string as
- * a `language-mermaid` class, Javadoc authors write `<pre class="mermaid">`, and some renderers
- * drop the marker entirely - hence the optional keyword heuristic.
+ * Doc comment renderers differ in what survives into the HTML:
+ *
+ * - KDoc keeps the fence info string as a `language-mermaid` class.
+ * - Javadoc authors write `<pre class="mermaid">`, and some renderers drop the
+ *   marker entirely. For those, either we get the information from the comment
+ *   source, or we have to guess from the first line of the block, hence the
+ *   optional keyword heuristic.
  */
 object MermaidBlockDetector {
+
+    private const val MERMAID_MARKER = "mermaid"
 
     private val KEYWORDS = listOf(
         "graph",
@@ -41,10 +47,12 @@ object MermaidBlockDetector {
     )
 
     /**
-     * Mermaid source of [element], or `null` when it is an ordinary code block.
+     * Mermaid source of [element], or `null` when it is an ordinary code
+     * block.
      *
-     * [isTagged] is asked whether a block's body was fenced as ```` ```mermaid ```` in the comment
-     * source - the only reliable marker once syntax highlighting has consumed the info string.
+     * [isTagged] is asked whether a block's body was fenced as
+     * ```` ```mermaid ```` in the comment source - the only reliable marker
+     * once syntax highlighting has consumed the info string.
      */
     fun mermaidSource(
         element: Element,
@@ -53,24 +61,38 @@ object MermaidBlockDetector {
     ): String? {
         val code = element.selectFirst("code")
         val text = sourceOf(code ?: element)
+
         if (text.isBlank()) return null
 
         val classes = (element.className() + " " + code?.className().orEmpty()).lowercase()
-        if (classes.contains("mermaid")) return text
+
+        if (classes.contains(MERMAID_MARKER)) return text
+
         if (isTagged(MermaidFences.normalize(text))) return text
 
         val lines = text.lines()
+
+        // Get the first non-blank line, which is either the
+        // fence info string or the first line of the block.
         val firstIndex = lines.indexOfFirst { it.isNotBlank() }
+
         if (firstIndex < 0) return null
+
         val first = lines[firstIndex].trim()
 
-        // Some renderers keep the fence info string as the first line of the block.
-        if (first.equals("mermaid", ignoreCase = true)) {
-            return lines.drop(firstIndex + 1).joinToString("\n").trimEnd().ifBlank { null }
+        // Some renderers keep the fence info string as the
+        // first line of the block.
+        if (first.equals(MERMAID_MARKER, ignoreCase = true)) {
+            return lines.drop(firstIndex + 1)
+                .joinToString("\n")
+                .trimEnd()
+                .ifBlank { null }
         }
 
-        if (!heuristics) return null
-        return if (looksLikeMermaid(first)) text else null
+        // Nothing found so far. If heuristics are enabled
+        // try to detect a Mermaid diagram from the first
+        // line of the block.
+        return if (heuristics && looksLikeMermaid(first)) text else null
     }
 
     /**
