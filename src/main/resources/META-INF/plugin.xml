@@ -20,7 +20,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!--
-          The single seam: DocRenderItemManagerImpl builds every rendered comment through this
+          DocRenderItemManagerImpl builds every rendered comment through this
           service, so replacing it (the platform marks it open="true") covers the render pass, the
           gutter toggle and refreshes without depending on extension ordering.
         -->
@@ -40,7 +40,7 @@
                 language=""
                 implementationClass="com.github.tvcsantos.mermaidrenderer.render.MermaidErrorLineMarkerProvider"/>
 
-        <postStartupActivity implementation="com.github.tvcsantos.mermaidrenderer.render.MermaidSeamCheck"/>
+        <postStartupActivity implementation="com.github.tvcsantos.mermaidrenderer.ServiceOverridesCheck"/>
 
         <notificationGroup id="Mermaid Renderer" displayType="BALLOON"/>
 

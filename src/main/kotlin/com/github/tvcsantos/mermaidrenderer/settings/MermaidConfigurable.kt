@@ -14,7 +14,9 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
 
-class MermaidConfigurable : BoundConfigurable(MermaidBundle.message("settings.title")) {
+class MermaidConfigurable : BoundConfigurable(
+    MermaidBundle.message("settings.title")
+) {
 
     override fun createPanel(): DialogPanel {
         val settings = MermaidSettings.getInstance()
@@ -39,13 +41,16 @@ class MermaidConfigurable : BoundConfigurable(MermaidBundle.message("settings.ti
                     .bindItem(settings::themeMode.toNullableProperty())
             }
             row(MermaidBundle.message("settings.maxWidth")) {
-                intTextField(200..4000).bindIntText(settings::maxDiagramWidth)
+                intTextField(200..4000)
+                    .bindIntText(settings::maxDiagramWidth)
             }
             row(MermaidBundle.message("settings.timeout")) {
-                intTextField(2..120).bindIntText(settings::renderTimeoutSeconds)
+                intTextField(2..120)
+                    .bindIntText(settings::renderTimeoutSeconds)
             }
             row(MermaidBundle.message("settings.cacheLimit")) {
-                intTextField(4..4096).bindIntText(settings::diskCacheLimitMb)
+                intTextField(4..4096)
+                    .bindIntText(settings::diskCacheLimitMb)
             }
             row {
                 button(MermaidBundle.message("settings.clearCache")) {
@@ -58,9 +63,11 @@ class MermaidConfigurable : BoundConfigurable(MermaidBundle.message("settings.ti
 
     override fun apply() {
         super.apply()
-        // Theme, width and scale are part of the cache key, so previous failures deserve a retry.
+        // Theme, width and scale are part of the cache key, so previous
+        // failures deserve a retry.
         service<MermaidRenderService>().forgetFailures()
-        // Showing or hiding the marker only takes effect once the files are analyzed again.
+        // Showing or hiding the marker only takes effect once the files are
+        // analyzed again.
         ProjectManager.getInstance().openProjects
             .filterNot { it.isDisposed }
             .forEach {

@@ -9,7 +9,7 @@ import javax.imageio.ImageIO
  *
  * Opt-in, because it starts JCEF: run with `./gradlew test -Dmermaid.jcef.test=true`.
  */
-class JcefMermaidRendererTest : BasePlatformTestCase() {
+internal class JcefMermaidRendererTest : BasePlatformTestCase() {
 
     /** Rendering blocks and needs EDT free to create the browser, so the test may not own EDT. */
     override fun runInDispatchThread(): Boolean = false

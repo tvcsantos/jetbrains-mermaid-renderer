@@ -38,13 +38,13 @@ class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
         var themeMode: String = ThemeMode.AUTO.name
 
         @JvmField
-        var maxDiagramWidth: Int = 760
+        var maxDiagramWidth: Int = DEFAULT_MAX_DIAGRAM_WIDTH
 
         @JvmField
-        var renderTimeoutSeconds: Int = 15
+        var renderTimeoutSeconds: Int = DEFAULT_RENDER_TIMEOUT_SECONDS
 
         @JvmField
-        var diskCacheLimitMb: Int = 64
+        var diskCacheLimitMb: Int = DEFAULT_DISK_CACHE_LIMIT_MB
     }
 
     private var state = State()
@@ -62,9 +62,12 @@ class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
         }
 
     /**
-     * When on, a diagram that has not been rendered yet is marked as such in the comment. Off by
-     * default: a diagram usually appears within a moment, and the note is mostly useful when
-     * diagnosing why one does not.
+     * When on, a diagram that has not been rendered yet is marked as such in
+     * the comment. When off, the comment is left blank until the diagram is
+     * ready.
+     *
+     * Default: off, because a diagram usually appears within a moment, and
+     * the note is mostly useful when diagnosing why one does not.
      */
     var showRenderingProgress: Boolean
         get() = state.showRenderingProgress
@@ -72,7 +75,16 @@ class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
             state.showRenderingProgress = value
         }
 
-    /** Off by default: a diagram that fails to render is only written to the log. */
+    /**
+     * When on, a diagram that fails to render is marked as such in the
+     * comment. When off, the comment is left blank until the diagram is ready,
+     * and if it fails, the comment is left blank.
+     *
+     * In both settings, the error is logged, and can be seen in the IDE log.
+     *
+     * Default: off, avoid cluttering the comment with error messages,
+     * which are usually transient.
+     */
     var showErrorMarker: Boolean
         get() = state.showErrorMarker
         set(value) {
@@ -80,30 +92,43 @@ class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
         }
 
     var themeMode: ThemeMode
-        get() = runCatching { ThemeMode.valueOf(state.themeMode) }.getOrDefault(ThemeMode.AUTO)
+        get() = runCatching {
+            ThemeMode.valueOf(state.themeMode)
+        }.getOrDefault(ThemeMode.AUTO)
         set(value) {
             state.themeMode = value.name
         }
 
     var maxDiagramWidth: Int
-        get() = state.maxDiagramWidth.coerceIn(200, 4000)
+        get() = state.maxDiagramWidth.coerceIn(MIN_WIDTH, MAX_WIDTH)
         set(value) {
-            state.maxDiagramWidth = value.coerceIn(200, 4000)
+            state.maxDiagramWidth = value.coerceIn(MIN_WIDTH, MAX_WIDTH)
         }
 
     var renderTimeoutSeconds: Int
-        get() = state.renderTimeoutSeconds.coerceIn(2, 120)
+        get() = state.renderTimeoutSeconds.coerceIn(MIN_TIMEOUT, MAX_TIMEOUT)
         set(value) {
-            state.renderTimeoutSeconds = value.coerceIn(2, 120)
+            state.renderTimeoutSeconds = value.coerceIn(MIN_TIMEOUT, MAX_TIMEOUT)
         }
 
     var diskCacheLimitMb: Int
-        get() = state.diskCacheLimitMb.coerceIn(4, 4096)
+        get() = state.diskCacheLimitMb.coerceIn(MIN_CACHE_MB, MAX_CACHE_MB)
         set(value) {
-            state.diskCacheLimitMb = value.coerceIn(4, 4096)
+            state.diskCacheLimitMb = value.coerceIn(MIN_CACHE_MB, MAX_CACHE_MB)
         }
 
     companion object {
         fun getInstance(): MermaidSettings = service()
+
+        private const val MIN_WIDTH = 200
+        private const val MAX_WIDTH = 4000
+        private const val MIN_TIMEOUT = 2
+        private const val MAX_TIMEOUT = 120
+        private const val MIN_CACHE_MB = 4
+        private const val MAX_CACHE_MB = 4096
+
+        private const val DEFAULT_MAX_DIAGRAM_WIDTH = 760
+        private const val DEFAULT_RENDER_TIMEOUT_SECONDS = 15
+        private const val DEFAULT_DISK_CACHE_LIMIT_MB = 64
     }
 }

@@ -7,7 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class MermaidBlockDetectorTest {
+internal class MermaidBlockDetectorTest {
 
     private fun firstBlock(html: String) = Jsoup.parse(html).select("pre, .mermaid").first()!!
 

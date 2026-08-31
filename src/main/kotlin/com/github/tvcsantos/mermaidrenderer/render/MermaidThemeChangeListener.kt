@@ -9,21 +9,28 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.ProjectManager
 
 /**
- * Diagram colors follow the IDE theme, and the theme is part of the cache key - so a theme switch
- * needs the open rendered comments recomputed, otherwise they keep showing the previous bitmaps.
+ * Recomputes the open rendered comments when the IDE theme changes.
+ *
+ * Diagram colors follow the theme, and the theme is part of the cache key.
+ * Without a refresh the comments keep showing the previous bitmaps.
  */
 class MermaidThemeChangeListener : LafManagerListener, EditorColorsListener {
 
-    override fun lookAndFeelChanged(source: LafManager) = refreshOpenFiles()
+    override fun lookAndFeelChanged(source: LafManager) =
+        refreshOpenFiles()
 
-    override fun globalSchemeChange(scheme: EditorColorsScheme?) = refreshOpenFiles()
+    override fun globalSchemeChange(scheme: EditorColorsScheme?) =
+        refreshOpenFiles()
 
     private fun refreshOpenFiles() {
-        service<MermaidRenderService>().forgetFailures() // also bumps the rewrite generation
+        // also bumps the rewrite generation
+        service<MermaidRenderService>().forgetFailures()
         for (project in ProjectManager.getInstance().openProjects) {
             if (project.isDisposed) continue
             val refresher = project.service<DocRenderRefresher>()
-            FileEditorManager.getInstance(project).openFiles.forEach(refresher::scheduleRefresh)
+            FileEditorManager.getInstance(project)
+                .openFiles
+                .forEach(refresher::scheduleRefresh)
         }
     }
 }

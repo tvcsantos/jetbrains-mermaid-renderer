@@ -8,7 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.time.Duration.Companion.milliseconds
 
-class DiagramUpdatesTest {
+internal class DiagramUpdatesTest {
 
     private val pendingResult = RewriteResult("<p>code block</p>", candidates = 1, matched = 1, pending = 1)
     private val readyResult = RewriteResult("<p><img src='diagram.png'></p>", candidates = 1, matched = 1)

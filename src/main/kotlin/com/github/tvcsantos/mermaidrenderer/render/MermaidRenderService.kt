@@ -25,8 +25,9 @@ data class RefreshTarget(val project: Project, val file: VirtualFile)
 /**
  * Serves diagrams from the cache and renders missing ones in the background.
  *
- * [resolve] is called from `renderText()`, which runs under a read lock, so it never blocks: a
- * miss returns [DiagramState.Pending] and the rendered comment is recomputed once the image lands.
+ * [resolve] is called from `renderText()`, which runs under a read lock, so it
+ * never blocks. A miss returns [DiagramState.Pending] and the rendered comment
+ * is recomputed once the image lands.
  */
 @Service(Service.Level.APP)
 class MermaidRenderService : Disposable {

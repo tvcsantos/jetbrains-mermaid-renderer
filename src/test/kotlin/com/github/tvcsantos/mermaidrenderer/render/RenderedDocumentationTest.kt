@@ -21,15 +21,15 @@ import javax.imageio.ImageIO
 
 /**
  * The rewriting is driven from [MermaidDocRenderItem], which the platform only reaches through a
- * painted inlay - so these tests check the two halves separately: that the plugin owns the seam,
+ * painted inlay - so these tests check the two halves separately: that the plugin owns the renderer,
  * and that the rewrite handles the HTML a real IDE produces.
  *
  * The documentation HTML is obtained through `InlineDocumentationProvider` **in the test only**:
  * production code no longer touches that extension point.
  */
-class RenderedDocumentationTest : BasePlatformTestCase() {
+internal class RenderedDocumentationTest : BasePlatformTestCase() {
 
-    fun testPluginOwnsTheRenderingSeam() {
+    fun testPluginOwnsTheDocRendererProvider() {
         assertTrue(
             "DocRendererProvider is ${DocRendererProvider.getInstance().javaClass.name}",
             DocRendererProvider.getInstance() is MermaidDocRendererProvider,

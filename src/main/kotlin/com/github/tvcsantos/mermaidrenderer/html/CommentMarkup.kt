@@ -14,7 +14,8 @@ object CommentMarkup {
      * as the leading `*` in KDoc lines like `* graph TD`. The result is
      * trimmed text content.
      *
-     * Supported styles: KDoc and block comments, plus the `///` and `//` line forms.
+     * Supported styles: KDoc and block comments, plus the `///` and `//` line
+     * forms.
      *
      * @param line The line of text to strip.
      * @return The line without its comment markers.

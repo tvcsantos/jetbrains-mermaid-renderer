@@ -1,5 +1,5 @@
 // Decorating documentation this plugin does not own has no public API.
-// DocRenderItem is @Internal; wrapping it is how the comment's HTML is
+// DocRenderItem is @Internal. Wrapping it is how the comment's HTML is
 // rewritten.
 @file:Suppress("UnstableApiUsage")
 
@@ -21,17 +21,19 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.InlineDocumentation
 import java.util.concurrent.atomic.AtomicBoolean
+import com.intellij.codeInsight.documentation.render.DocRenderer
 
 /**
  * A rendered comment with its Mermaid blocks replaced by images.
  *
- * Everything is delegated except [textToRender], which is rewritten on the way to the renderer.
- * `DocRenderer` re-reads that property whenever it rebuilds its pane, so the rewrite is re-derived
- * rather than stored - that is what lets a finished diagram replace its placeholder.
+ * Everything is delegated except [textToRender], which is rewritten on the way
+ * to the renderer. [DocRenderer] re-reads that property whenever it rebuilds
+ * its pane, so the rewrite is re-derived rather than stored. That is what lets
+ * a finished diagram replace its placeholder.
  *
- * The wrapper is only ever seen by `DocRenderer`; the manager keeps the original item. The one
- * behaviour it changes is `DocRenderer.isDebugZombie`, an `instanceof` check behind the
- * `cache.markup.debug` registry flag.
+ * The wrapper is only ever seen by [DocRenderer]. The manager keeps the
+ * original item. The one behavior it changes is [DocRenderer.isDebugZombie],
+ * an `instanceof` check behind the `cache.markup.debug` registry flag.
  */
 class MermaidDocRenderItem(private val delegate: DocRenderItem) : DocRenderItem {
 

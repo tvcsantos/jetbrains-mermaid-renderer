@@ -1,5 +1,5 @@
 // Decorating documentation this plugin does not own has no public API.
-// DocRenderItemUpdater is @Internal; it is how a rendered comment is asked to
+// DocRenderItemUpdater is @Internal. It is how a rendered comment is asked to
 // redraw.
 @file:Suppress("UnstableApiUsage")
 
@@ -23,9 +23,10 @@ import java.util.concurrent.TimeUnit
 /**
  * Redraws the rendered doc comments of a file after a diagram finished rendering.
  *
- * The documentation itself has not changed - only this plugin's rewrite of it - so it is enough to
- * ask the renderers to rebuild their content, which re-reads [MermaidDocRenderItem.textToRender].
- * Requests are coalesced: a comment with several diagrams refreshes once.
+ * The documentation itself has not changed, only this plugin's rewrite of it,
+ * so it is enough to ask the renderers to rebuild their content, which
+ * re-reads [MermaidDocRenderItem.textToRender]. Requests are coalesced, so a
+ * comment with several diagrams refreshes once.
  */
 @Service(Service.Level.PROJECT)
 class DocRenderRefresher(private val project: Project) : Disposable {
@@ -33,9 +34,10 @@ class DocRenderRefresher(private val project: Project) : Disposable {
     private val scheduled = ConcurrentHashMap.newKeySet<VirtualFile>()
 
     /**
-     * What was broken in each comment last time, so the daemon is only disturbed on a change.
-     * Keyed per comment - a file usually holds several, and a file-level record would let one
-     * comment overwrite another's and restart the daemon in a loop.
+     * What was broken in each comment last time, so the daemon is only
+     * disturbed on a change. Keyed per comment, because a file usually holds
+     * several, and a file-level record would let one comment overwrite
+     * another's and restart the daemon in a loop.
      */
     private val lastFailed = ConcurrentHashMap<Pair<VirtualFile, Int>, Set<String>>()
 
@@ -48,15 +50,24 @@ class DocRenderRefresher(private val project: Project) : Disposable {
     }
 
     /**
-     * Keeps [MermaidErrorLineMarkerProvider] in step. Its markers come from render outcomes, which
-     * live in a service - the daemon cannot see them change, so a diagram that starts or stops
-     * failing has to ask for a re-analysis. Only a real change triggers one, otherwise the restart
+     * Keeps [MermaidErrorLineMarkerProvider] in step. Its markers come from
+     * render outcomes, which live in a service. The daemon cannot see those
+     * change, so a diagram that starts or stops failing has to ask for a
+     * re-analysis. Only a real change triggers one, otherwise the restart
      * would re-run the doc render pass and loop.
      */
-    fun syncMarkers(file: VirtualFile, commentOffset: Int, failed: Set<String>) {
+    fun syncMarkers(
+        file: VirtualFile,
+        commentOffset: Int,
+        failed: Set<String>
+    ) {
         if (project.isDisposed) return
         val key = file to commentOffset
-        val previous = if (failed.isEmpty()) lastFailed.remove(key) else lastFailed.put(key, failed)
+        val previous = if (failed.isEmpty()) {
+            lastFailed.remove(key)
+        } else {
+            lastFailed.put(key, failed)
+        }
         if (previous.orEmpty() == failed) return
         restartDaemon(file)
     }
@@ -67,7 +78,10 @@ class DocRenderRefresher(private val project: Project) : Disposable {
             PsiManager.getInstance(project).findFile(file)
                 ?.let {
                     DaemonCodeAnalyzer.getInstance(project)
-                        .restart(it, "Mermaid diagram state changed")
+                        .restart(
+                            /* psiFile = */ it,
+                            /* reason = */ "Mermaid diagram state changed"
+                        )
                 }
         }, ModalityState.any(), project.disposed)
     }
@@ -78,7 +92,12 @@ class DocRenderRefresher(private val project: Project) : Disposable {
             if (project.isDisposed || !file.isValid) return@invokeLater
             FileEditorManager.getInstance(project).getAllEditors(file)
                 .filterIsInstance<TextEditor>()
-                .forEach { DocRenderItemUpdater.updateRenderers(it.editor, true) }
+                .forEach {
+                    DocRenderItemUpdater.updateRenderers(
+                        /* editor = */ it.editor,
+                        /* recreateContent = */ true
+                    )
+                }
 
         }, ModalityState.any(), project.disposed)
     }

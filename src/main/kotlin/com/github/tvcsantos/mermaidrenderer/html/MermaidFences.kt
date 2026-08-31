@@ -3,7 +3,7 @@ package com.github.tvcsantos.mermaidrenderer.html
 /**
  * Mermaid comment utilities for scanning raw doc-comment source.
  *
- * The rendered HTML cannot be trusted for this: when a Mermaid language plugin
+ * The rendered HTML cannot be trusted for this. When a Mermaid language plugin
  * is installed the platform syntax-highlights fences and can consume the info
  * string, so explicit tagging may be lost. Reading the source preserves the
  * original comment content and keeps fence detection reliable.

@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class MermaidFencesTest {
+internal class MermaidFencesTest {
 
     @Test
     fun `reads a fence out of a kdoc comment`() {

@@ -20,7 +20,7 @@ internal object DiagramUpdates {
      * Emits [initialHtml] rewritten, each time a pending diagram changes it.
      *
      * A popup is computed once and shown, so unlike a rendered comment there
-     * is no inlay to refresh when a diagram arrives a moment later; the
+     * is no inlay to refresh when a diagram arrives a moment later. The
      * platform replaces the content from this flow instead, and cancels
      * collection when the popup closes. The rewrite is polled until nothing is
      * pending, either because every diagram rendered or because the rest

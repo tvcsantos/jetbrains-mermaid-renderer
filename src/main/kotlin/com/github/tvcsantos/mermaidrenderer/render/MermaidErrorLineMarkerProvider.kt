@@ -18,17 +18,20 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.awt.RelativePoint
 import java.awt.event.MouseEvent
+import com.intellij.codeInsight.documentation.render.DocRenderItem
 
 /**
  * Marks a doc comment whose diagram Mermaid refused to parse.
  *
- * This is the plugin's *own* gutter icon, deliberately not the rendered-comment one: the platform
- * casts whatever `DocRenderItem.calcFoldingGutterIconRenderer` returns back to its own type, so
- * that icon can only ever be the platform's.
+ * This is the plugin's *own* gutter icon, deliberately not the
+ * rendered-comment one. The platform casts whatever
+ * [DocRenderItem.calcFoldingGutterIconRenderer] returns back to its own type,
+ * so that icon can only ever be the platform's.
  *
- * The marker is anchored on the first token *after* the comment - the declaration it documents -
- * rather than on the comment itself. A rendered comment is folded into a custom fold region, and
- * the gutter of a folded line is not drawn, so a marker inside it is only visible in code mode.
+ * The marker is anchored on the first token *after* the comment, the
+ * declaration it documents, rather than on the comment itself. A rendered
+ * comment is folded into a custom fold region, and the gutter of a folded line
+ * is not drawn, so a marker inside it is only visible in code mode.
  */
 class MermaidErrorLineMarkerProvider : LineMarkerProvider {
 

@@ -20,7 +20,7 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
-class MermaidDocumentationTargetTest : BasePlatformTestCase() {
+internal class MermaidDocumentationTargetTest : BasePlatformTestCase() {
 
     private val diagram = "graph TD; A-->B;"
     private val documentation = "<div class='content'><pre class=\"mermaid\">graph TD; A--&gt;B;</pre></div>"
@@ -34,7 +34,7 @@ class MermaidDocumentationTargetTest : BasePlatformTestCase() {
         }
     }
 
-    fun testThePluginOwnsTheDocumentationSeam() {
+    fun testThePluginOwnsTheDocumentationTargetProvider() {
         assertTrue(
             "IdeDocumentationTargetProvider is ${IdeDocumentationTargetProvider.getInstance(project).javaClass.name}",
             IdeDocumentationTargetProvider.getInstance(project) is MermaidIdeDocumentationTargetProvider,

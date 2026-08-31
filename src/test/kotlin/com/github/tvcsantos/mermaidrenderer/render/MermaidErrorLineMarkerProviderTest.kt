@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class MermaidErrorLineMarkerProviderTest : BasePlatformTestCase() {
+internal class MermaidErrorLineMarkerProviderTest : BasePlatformTestCase() {
 
     private val provider = MermaidErrorLineMarkerProvider()
 

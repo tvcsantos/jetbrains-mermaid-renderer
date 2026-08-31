@@ -13,15 +13,75 @@ import kotlin.io.path.extension
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.name
 
-/** A rasterized diagram on disk. [width]/[height] are logical (unscaled) pixels. */
-data class CachedDiagram(val path: Path, val width: Int, val height: Int) {
-    val url: String get() = path.toUri().toString()
+/**
+ * A rasterized diagram on disk. [width]/[height] are logical (unscaled)
+ * pixels.
+ */
+data class CachedDiagram(
+    val path: Path,
+    val width: Int,
+    val height: Int
+) {
+    val url: String get() =
+        path.toUri().toString()
 }
 
 /**
- * PNG cache keyed by [DiagramRequest.cacheKey]. Survives restarts so reopening a file shows its
- * diagrams immediately. The logical size is encoded in the file name, which keeps lookups free of
- * image decoding.
+ * Converts a size in megabytes to bytes.
+ *
+ * @receiver A size in megabytes.
+ * @return The same size in bytes.
+ */
+private fun Int.toBytes(): Long = this.toLong() * 1024 * 1024
+
+private const val PNG_EXTENSION = "png"
+private const val PNG_SUFFIX = ".$PNG_EXTENSION"
+private const val DIMENSION_SEPARATOR = "x"
+private const val SHA_SEPARATOR = "-"
+
+/**
+ * Builds the name a diagram is cached under.
+ *
+ * The size travels in the name, in the form `<key>-<width>x<height>.png`, so
+ * that indexing the cache never has to decode an image.
+ *
+ * @param key The diagram's cache key.
+ * @param width The diagram's logical width in pixels.
+ * @param height The diagram's logical height in pixels.
+ * @return The file name for that diagram.
+ */
+private fun buildCacheFileName(key: String, width: Int, height: Int): String =
+    "$key$SHA_SEPARATOR$width$DIMENSION_SEPARATOR$height$PNG_SUFFIX"
+
+/**
+ * Reads a cached diagram back out of its file name.
+ *
+ * The name carries both the key and the logical size, as written by
+ * [buildCacheFileName], so the cache can be indexed without opening a single file.
+ *
+ * @receiver A file found in the cache directory.
+ * @return The cache key and the diagram it names, or `null` when the file is
+ * not a cache entry.
+ */
+private fun Path.toCachedDiagramEntryOrNull(): Pair<String, CachedDiagram>? {
+    if (extension != PNG_EXTENSION) return null
+    val name = name.removeSuffix(PNG_SUFFIX)
+    val separator = name.lastIndexOf(
+        SHA_SEPARATOR
+    ).takeIf { it > 0 } ?: return null
+    val size = name.substring(separator + 1)
+        .split(DIMENSION_SEPARATOR)
+    if (size.size != 2) return null
+    val width = size[0].toIntOrNull() ?: return null
+    val height = size[1].toIntOrNull() ?: return null
+    return name.substring(0, separator) to
+            CachedDiagram(this, width, height)
+}
+
+/**
+ * PNG cache keyed by [DiagramRequest.cacheKey]. Survives restarts so reopening
+ * a file shows its diagrams immediately. The logical size is encoded in the
+ * file name, which keeps lookups free of image decoding.
  */
 @Service(Service.Level.APP)
 class DiagramCache {
@@ -39,13 +99,20 @@ class DiagramCache {
         return cached
     }
 
-    fun put(key: String, png: ByteArray, width: Int, height: Int): CachedDiagram? {
+    fun put(
+        key: String,
+        png: ByteArray,
+        width: Int,
+        height: Int
+    ): CachedDiagram? {
         ensureScanned()
         return try {
             Files.createDirectories(root)
-            val file = root.resolve("$key-${width}x$height.png")
+            val file = root.resolve(buildCacheFileName(key, width, height))
             Files.write(file, png)
-            CachedDiagram(file, width, height).also { index[key] = it }
+            CachedDiagram(file, width, height).also {
+                index[key] = it
+            }
         } catch (e: Exception) {
             logger.warn("Cannot store a rendered diagram", e)
             null
@@ -56,7 +123,9 @@ class DiagramCache {
         index.clear()
         runCatching {
             if (Files.isDirectory(root)) {
-                Files.list(root).use { files -> files.forEach { it.deleteIfExists() } }
+                Files.list(root).use { files ->
+                    files.forEach { it.deleteIfExists() }
+                }
             }
         }.onFailure {
             logger.warn("Cannot clear the diagram cache", it)
@@ -65,10 +134,16 @@ class DiagramCache {
 
     private fun ensureScanned() {
         if (!scanned.compareAndSet(false, true)) return
+
         runCatching {
             if (!Files.isDirectory(root)) return
+
             Files.list(root).use { files ->
-                files.forEach { path -> parse(path)?.let { (key, diagram) -> index[key] = diagram } }
+                files.forEach { path ->
+                    path.toCachedDiagramEntryOrNull()?.let { (key, diagram) ->
+                        index[key] = diagram
+                    }
+                }
             }
             prune()
         }.onFailure {
@@ -76,30 +151,40 @@ class DiagramCache {
         }
     }
 
-    /** File names look like `<sha256>-<width>x<height>.png`. */
-    private fun parse(path: Path): Pair<String, CachedDiagram>? {
-        if (path.extension != "png") return null
-        val name = path.name.removeSuffix(".png")
-        val separator = name.lastIndexOf('-').takeIf { it > 0 } ?: return null
-        val size = name.substring(separator + 1).split('x')
-        if (size.size != 2) return null
-        val width = size[0].toIntOrNull() ?: return null
-        val height = size[1].toIntOrNull() ?: return null
-        return name.substring(0, separator) to CachedDiagram(path, width, height)
-    }
-
     private fun prune() {
-        val limit = MermaidSettings.getInstance().diskCacheLimitMb.toLong() * 1024 * 1024
-        val files = index.values.map { it.path }.filter { Files.exists(it) }
-        var total = files.sumOf { runCatching { Files.size(it) }.getOrDefault(0L) }
+        val limit = MermaidSettings.getInstance().diskCacheLimitMb.toBytes()
+
+        val files = index.values.map {
+            it.path
+        }.filter {
+            Files.exists(it)
+        }
+
+        var total = files.sumOf {
+            runCatching {
+                Files.size(it)
+            }.getOrDefault(0L)
+        }
         if (total <= limit) return
 
-        val oldestFirst = files.sortedBy { runCatching { it.getLastModifiedTime().toMillis() }.getOrDefault(0L) }
+        val oldestFirst = files.sortedBy {
+            runCatching {
+                it.getLastModifiedTime().toMillis()
+            }.getOrDefault(0L)
+        }
+
         for (path in oldestFirst) {
             if (total <= limit) break
-            total -= runCatching { Files.size(path) }.getOrDefault(0L)
+
+            total -= runCatching {
+                Files.size(path)
+            }.getOrDefault(0L)
+
             path.deleteIfExists()
-            index.entries.removeIf { it.value.path == path }
+
+            index.entries.removeIf {
+                it.value.path == path
+            }
         }
     }
 

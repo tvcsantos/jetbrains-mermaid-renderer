@@ -8,8 +8,8 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
 /**
- * The outcome of a rewrite: the resulting HTML, and what the rewrite found
- * while producing it.
+ * The outcome of a rewrite. Holds the resulting HTML, and what the rewrite
+ * found while producing it.
  */
 data class RewriteResult(
     /** The rewritten HTML, or the original if nothing changed */
@@ -42,7 +42,7 @@ object MermaidHtmlRewriter {
      * image with that image.
      *
      * A block whose diagram is not ready is left as the author wrote it, and
-     * so is one that failed; both are reported in the result. When nothing is
+     * so is one that failed. Both are reported in the result. When nothing is
      * replaced, [html] is returned unchanged rather than reserialized.
      *
      * @param html The documentation HTML to rewrite.

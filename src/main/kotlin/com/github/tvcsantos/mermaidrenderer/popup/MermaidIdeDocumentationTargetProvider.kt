@@ -1,5 +1,5 @@
 // Decorating documentation this plugin does not own has no public API.
-// IdeDocumentationTargetProvider is the platform's seam for the documentation
+// IdeDocumentationTargetProvider is the platform's hook for the documentation
 // popup.
 @file:Suppress("UnstableApiUsage")
 
