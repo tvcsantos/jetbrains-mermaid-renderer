@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish
+    runs-on: ubuntu-latest
+    env:
+      # Read in step conditions, so a missing secret skips a step instead of failing it.
+      JB_PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+      JB_CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
+      JB_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      JB_PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Cache Plugin Verifier IDEs
+        uses: actions/cache@v6
+        with:
+          path: ~/.pluginVerifier/ides
+          key: plugin-verifier-${{ runner.os }}-${{ hashFiles('gradle.properties') }}
+          restore-keys: plugin-verifier-${{ runner.os }}-
+
+      # The tag names what users install, so it has to be the version that gets built.
+      - name: Check the tag matches pluginVersion
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(grep '^pluginVersion=' gradle.properties | cut -d= -f2)
+          tag=${GITHUB_REF_NAME#v}
+          if [ "$version" != "$tag" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match pluginVersion $version" >&2
+            exit 1
+          fi
+
+      - name: Build, test and verify
+        run: ./gradlew build verifyPlugin --console=plain
+
+      # verifyPluginSignature signs first, then checks the result against the certificate.
+      - name: Sign the plugin
+        if: env.JB_CERTIFICATE_CHAIN != ''
+        run: ./gradlew verifyPluginSignature --console=plain
+
+      - name: Publish to JetBrains Marketplace
+        if: env.JB_PUBLISH_TOKEN != ''
+        run: ./gradlew publishPlugin --console=plain
+
+      # Always attached, so the ZIP is installable from the release even before Marketplace
+      # approval, and when no publishing secrets are configured at all.
+      - name: Attach the plugin to the GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            build/distributions/*.zip \
+            || gh release upload "$GITHUB_REF_NAME" build/distributions/*.zip --clobber

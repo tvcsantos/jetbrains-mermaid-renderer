@@ -1,5 +1,7 @@
 # Mermaid Renderer
 
+[![Build](https://github.com/tvcsantos/jetbrains-mermaid-renderer/actions/workflows/build.yml/badge.svg)](https://github.com/tvcsantos/jetbrains-mermaid-renderer/actions/workflows/build.yml)
+
 An IntelliJ plugin that renders [Mermaid](https://mermaid.js.org) diagrams inside the IDE's
 **Rendered Documentation Comments**.
 
@@ -70,6 +72,28 @@ declaration as well, where hovering shows the message and clicking shows the ful
 ```
 
 Requires JDK 21. The plugin targets IntelliJ IDEA 2026.2 (build 262) and newer.
+
+Every push and pull request runs `./gradlew build verifyPlugin` on GitHub Actions, and the resulting
+ZIP is attached to the run as an artifact.
+
+## Releasing
+
+Set `pluginVersion` in `gradle.properties`, then push the matching tag:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+The release workflow refuses a tag that does not match `pluginVersion`, builds and verifies the
+plugin, and attaches the ZIP to a GitHub release. Two further steps run only when their repository
+secrets exist, so the workflow is usable before either is set up:
+
+| Secret                                                     | Effect                                                                                                       |
+|------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| `CERTIFICATE_CHAIN`, `PRIVATE_KEY`, `PRIVATE_KEY_PASSWORD` | The plugin is signed. See [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html). |
+| `PUBLISH_TOKEN`                                            | The plugin is published to JetBrains Marketplace.                                                            |
+
+A `pluginVersion` such as `0.2.0-beta.1` publishes to the `beta` channel instead of the default one.
 
 ## License
 
