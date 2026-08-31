@@ -26,6 +26,10 @@ Toggle the rendered view (the gutter icon, or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kb
 code block is replaced by the diagram. The same happens in the quick documentation popup, on hover
 and in the documentation tool window.
 
+It will look like this:
+
+![The rendered Mermaid diagram](docs/images/example-result.png)
+
 ## How it works
 
 - The plugin does not compete for ownership of a comment's documentation. It replaces the two
