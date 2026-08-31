@@ -26,37 +26,40 @@ and in the documentation tool window.
 
 ## How it works
 
-- The plugin wraps the documentation produced by every other `InlineDocumentationProvider`, so no
-  language-specific code is needed: any language whose rendered docs contain a Mermaid block works.
-  The platform builds a rendered comment two ways and each needs the opposite registration order -
-  the render pass keeps one item per text range and the **last** provider wins (`order="last"`),
-  while toggling a single comment from the gutter resolves `findInlineDocumentation` with the
-  **first** non-null answer (`order="first"`). Hence two extensions.
+- The plugin does not compete for ownership of a comment's documentation. It replaces the two
+  platform services the finished HTML passes through: `DocRendererProvider` for rendered comments,
+  and `IdeDocumentationTargetProvider` for the popup, hover and tool window. Both are marked
+  `open="true"` by the platform for exactly this purpose, and every request funnels through them,
+  so nothing depends on extension ordering and no language-specific code is needed: any language
+  whose documentation HTML contains a Mermaid block works. A service has a single owner, so a
+  startup check reports it when another plugin takes one of the two over.
 - Diagrams are rendered locally: a bundled `mermaid.min.js` runs in an offscreen JCEF browser,
   which draws the resulting SVG onto a canvas and returns PNG bytes. **No network access and no
   external tools.**
 - Rendered PNGs are cached on disk, so reopening a file shows diagrams instantly.
-- `renderText()` runs under a read lock, so rendering never blocks it: the first pass shows a
-  "Rendering diagram..." note and the comment is refreshed as soon as the image is ready.
+- Rendering never blocks the documentation, which is produced under a read lock: a block whose
+  diagram is not ready is left as written, and the comment is refreshed as soon as the image is.
 
 ## Detection
 
-A code block is treated as Mermaid when it is tagged - ` ```mermaid ` in KDoc or markdown Javadoc,
+A code block is treated as Mermaid when it is tagged - ` ```mermaid ` in KDoc or Markdown Javadoc,
 `<pre class="mermaid">` in HTML Javadoc - or, when the heuristic is enabled (default), when it
 starts with a Mermaid keyword such as `graph`, `flowchart`, `sequenceDiagram`, `classDiagram`,
 `stateDiagram`, `erDiagram`, `gantt` or `mindmap`.
 
 ## Settings
 
-**Settings | Tools | Mermaid Renderer**: heuristic detection, the placeholder shown while a diagram
-is rendering, the gutter icon for diagrams that fail to render - both off by default, so a broken
-diagram is reported only in the IDE log until you ask for it - diagram
-theme (follows the IDE theme by default), maximum width, render timeout, disk cache limit, and a
-button to clear the cache.
+**Settings | Tools | Mermaid Renderer**:
+
+- **Heuristic detection** of untagged blocks (on by default).
+- **A gutter icon for diagrams that fail to render** (off by default).
+- **A placeholder while a diagram is rendering** (off by default).
+- Diagram theme (follows the IDE theme by default), maximum width, render timeout, disk cache limit,
+  and a button to clear the cache.
 
 A diagram Mermaid cannot parse never appears in the documentation itself: the comment keeps the code
-block as written, and the error is shown by a gutter icon beside the declaration - hover for the
-message, click for the full text.
+block as written, and the error goes to the IDE log. Turn the gutter icon on to see it beside the
+declaration as well, where hovering shows the message and clicking shows the full text.
 
 ## Building
 
@@ -68,7 +71,9 @@ message, click for the full text.
 
 Requires JDK 21. The plugin targets IntelliJ IDEA 2026.2 (build 262) and newer.
 
-## Licensing
+## License
 
-The plugin bundles `mermaid.min.js` (MIT); see
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
+
+It bundles `mermaid.min.js`, also MIT, whose license is kept in
 `src/main/resources/mermaid/LICENSE-mermaid.txt`.

@@ -62,9 +62,9 @@ class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
         }
 
     /**
-     * When on, a diagram that has not been rendered yet is marked as such in
-     * the comment. When off, the comment is left blank until the diagram is
-     * ready.
+     * When on, a diagram that has not been rendered yet is announced by a
+     * note in the comment. When off, the comment keeps the code block as
+     * written until the diagram is ready.
      *
      * Default: off, because a diagram usually appears within a moment, and
      * the note is mostly useful when diagnosing why one does not.
@@ -76,14 +76,15 @@ class MermaidSettings : PersistentStateComponent<MermaidSettings.State> {
         }
 
     /**
-     * When on, a diagram that fails to render is marked as such in the
-     * comment. When off, the comment is left blank until the diagram is ready,
-     * and if it fails, the comment is left blank.
+     * When on, a comment whose diagram failed to render is marked with a
+     * gutter icon beside the declaration it documents. When off, nothing
+     * announces the failure in the editor.
      *
-     * In both settings, the error is logged, and can be seen in the IDE log.
+     * Either way the comment keeps the code block as written, and the error
+     * is written to the IDE log.
      *
-     * Default: off, avoid cluttering the comment with error messages,
-     * which are usually transient.
+     * Default: off, because a Mermaid parse error is usually transient while
+     * a diagram is still being written.
      */
     var showErrorMarker: Boolean
         get() = state.showErrorMarker
