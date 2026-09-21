@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.3.21"
-intellijPlatform = "2.18.1"
+intellijPlatform = "2.19.0"
 junit = "4.13.2"
 
 [libraries]
